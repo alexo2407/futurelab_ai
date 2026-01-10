@@ -1,0 +1,21 @@
+# OPCIÓN SIMPLE - Sin mod_rewrite
+# Si tienes problemas con URLs amigables, usa este .htaccess
+
+# Seguridad básica
+<FilesMatch "^(config\.php|\.env)$">
+    Order allow,deny
+    Deny from all
+</FilesMatch>
+
+# PHP settings
+php_value upload_max_filesize 10M
+php_value post_max_size 10M
+php_value max_execution_time 300
+php_value max_input_time 300
+
+# Headers de seguridad
+<IfModule mod_headers.c>
+    Header set X-Content-Type-Options "nosniff"
+    Header set X-Frame-Options "SAMEORIGIN"
+    Header set X-XSS-Protection "1; mode=block"
+</IfModule>

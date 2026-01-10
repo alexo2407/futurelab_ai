@@ -1,0 +1,5 @@
+{
+  "name": "Creador de POST",
+  "description": "An application that uses AI to generate professional and cohesive designs by combining a main image with style references (either from another image or a text prompt) and specific design instructions.",
+  "requestFramePermissions": []
+}

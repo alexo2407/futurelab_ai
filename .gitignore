@@ -1,0 +1,11 @@
+/vendor/
+/node_modules/
+/storage/results/*
+/storage/uploads/*
+/storage/qr/*
+!/storage/results/.gitignore
+!/storage/uploads/.gitignore
+!/storage/qr/.gitignore
+.DS_Store
+Thumbs.db
+*.log
