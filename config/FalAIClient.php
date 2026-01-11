@@ -168,71 +168,24 @@ class FalAIClient {
     
     /**
      * Subir imagen a fal.ai storage y obtener URL
+     * 
+     * NOTA: fal.ai soporta data URIs directamente en el payload.
+     * El upload a su storage requiere un endpoint específico que puede variar.
+     * Por simplicidad y compatibilidad, usamos data URIs.
      */
     private function uploadImage($imageBase64, $mimeType) {
-        // Usar endpoint de upload de fal.ai
-        $uploadUrl = 'https://fal.run/storage/upload';
+        // fal.ai soporta data URIs inline directamente
+        // Esto es más simple y compatible que intentar usar su storage API
+        $dataUri = "data:$mimeType;base64," . $imageBase64;
         
-        // Determinar extensión
-        $ext = ($mimeType === 'image/png') ? 'png' : 'jpg';
-        $filename = uniqid('upload_') . '.' . $ext;
+        // Verificar tamaño (fal.ai tiene límite de ~10MB para data URIs)
+        $sizeKB = strlen($imageBase64) * 0.75 / 1024; // Aproximado
         
-        // Iniciar upload
-        $initCh = curl_init($uploadUrl);
-        curl_setopt($initCh, CURLOPT_RETURNTRANSFER, true);
-        curl_setopt($initCh, CURLOPT_POST, true);
-        curl_setopt($initCh, CURLOPT_POSTFIELDS, json_encode([
-            'file_name' => $filename,
-            'content_type' => $mimeType
-        ]));
-        curl_setopt($initCh, CURLOPT_HTTPHEADER, [
-            'Content-Type: application/json',
-            'Authorization: Key ' . $this->apiKey
-        ]);
-        curl_setopt($initCh, CURLOPT_TIMEOUT, 30);
-        
-        $initResponse = curl_exec($initCh);
-        $initHttpCode = curl_getinfo($initCh, CURLINFO_HTTP_CODE);
-        curl_close($initCh);
-        
-        if ($initHttpCode !== 200) {
-            error_log("fal.ai upload init failed: " . $initResponse);
-            // Fallback: usar data URI
-            return "data:$mimeType;base64," . $imageBase64;
+        if ($sizeKB > 10240) { // > 10MB
+            error_log("ADVERTENCIA: Imagen muy grande ($sizeKB KB). Considera reducir resolución.");
         }
         
-        $initResult = json_decode($initResponse, true);
-        $uploadUrl = $initResult['upload_url'] ?? null;
-        $fileUrl = $initResult['file_url'] ?? null;
-        
-        if (!$uploadUrl || !$fileUrl) {
-            // Fallback: usar data URI
-            return "data:$mimeType;base64," . $imageBase64;
-        }
-        
-        // Upload del archivo
-        $imageData = base64_decode($imageBase64);
-        
-        $uploadCh = curl_init($uploadUrl);
-        curl_setopt($uploadCh, CURLOPT_RETURNTRANSFER, true);
-        curl_setopt($uploadCh, CURLOPT_CUSTOMREQUEST, 'PUT');
-        curl_setopt($uploadCh, CURLOPT_POSTFIELDS, $imageData);
-        curl_setopt($uploadCh, CURLOPT_HTTPHEADER, [
-            'Content-Type: ' . $mimeType
-        ]);
-        curl_setopt($uploadCh, CURLOPT_TIMEOUT, 60);
-        
-        $uploadResponse = curl_exec($uploadCh);
-        $uploadHttpCode = curl_getinfo($uploadCh, CURLINFO_HTTP_CODE);
-        curl_close($uploadCh);
-        
-        if ($uploadHttpCode !== 200 && $uploadHttpCode !== 201) {
-            error_log("fal.ai file upload failed: " . $uploadResponse);
-            // Fallback: usar data URI
-            return "data:$mimeType;base64," . $imageBase64;
-        }
-        
-        return $fileUrl;
+        return $dataUri;
     }
     
     /**
