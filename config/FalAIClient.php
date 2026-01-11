@@ -213,6 +213,7 @@ class FalAIClient {
         }
         
         $statusUrl = $this->statusUrl . $modelBase . '/requests/' . $requestId . '/status';
+        $resultUrlBase = $this->statusUrl . $modelBase . '/requests/' . $requestId; // URL para obtener resultado
         
         echo "Esperando resultado (máx " . ($maxAttempts * $pollInterval) . "s)...\n";
         echo "Status URL: $statusUrl\n"; // Debug
@@ -248,14 +249,8 @@ class FalAIClient {
                 echo "✓ Imagen generada exitosamente\n";
                 
                 // Cuando status = COMPLETED, necesitamos obtener el resultado
-                // Opción 1: Usar response_url si está disponible
-                // Opción 2: Hacer request a /requests/{id} (sin /status)
-                
-                $resultUrl = $result['response_url'] ?? null;
-                if (!$resultUrl) {
-                    // Construir URL de resultado (sin /status)
-                    $resultUrl = $this->statusUrl . $modelBase . '/requests/' . $requestId;
-                }
+                // Usar response_url si está disponible, sino usar el URL base construido
+                $resultUrl = $result['response_url'] ?? $resultUrlBase;
                 
                 echo "Obteniendo resultado desde: $resultUrl\n";
                 
@@ -277,6 +272,10 @@ class FalAIClient {
                 }
                 
                 $finalResult = json_decode($resultResponse, true);
+                
+                // Debug: ver qué devuelve
+                error_log("fal.ai final result: " . json_encode($finalResult));
+                
                 return $this->processCompletedResult($finalResult);
                 
             } elseif ($status === 'FAILED') {
