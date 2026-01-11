@@ -77,23 +77,88 @@ $user = currentUser();
                         id="ai_prompt" 
                         name="ai_prompt" 
                         rows="6"
-                        placeholder="Ejemplo: Transforma esta foto en una imagen profesional de {nombre} como ingeniero de software. El sujeto debe aparecer trabajando en una oficina moderna..."><?php echo htmlspecialchars($carrera['ai_prompt'] ?? ''); ?></textarea>
+                        placeholder="Ejemplo: Toma la primera imagen como referencia de estilo. Reemplaza al sujeto de esa imagen con {nombre}. Mantén el mismo estilo, ambiente y composición."><?php echo htmlspecialchars($carrera['ai_prompt'] ?? ''); ?></textarea>
                     <small class="text-muted d-block mt-2">
-                        <strong>Instrucciones para GPT-Image-1:</strong><br>
-                        • GPT-Image-1 usa la foto del participante como base y la TRANSFORMA.<br>
-                        • Describe cómo debe verse la persona transformada (vestimenta, acción, fondo).<br>
-                        • Usa variables: <code>{nombre}</code> y <code>{carrera}</code>.<br>
-                        • El modelo preservará la identidad facial del participante.
+                        <strong>📸 Cómo funciona con fal.ai + Imagen de Referencia:</strong><br>
+                        • <strong>Imagen 1:</strong> Foto del participante (tomada en el evento)<br>
+                        • <strong>Imagen 2:</strong> Tu arte/referencia (sube abajo) - el "molde" artístico<br>
+                        • <strong>Resultado:</strong> La persona reemplaza al sujeto del arte manteniendo el estilo<br>
+                        • Variables disponibles: <code>{nombre}</code> y <code>{carrera}</code>
                     </small>
-                    <div class="alert alert-info mt-2">
-                        <strong>💡 Ejemplo de prompt efectivo:</strong><br>
+                    <div class="alert alert-warning mt-2">
+                        <strong>🎨 Prompt recomendado para reemplazo de sujeto:</strong><br>
                         <code>
-                        "Transforma esta foto en una imagen cinemática de {nombre} como astronauta. 
-                        El sujeto debe llevar un traje espacial blanco detallado con la bandera de México. 
-                        Fondo de paisaje marciano realista. Iluminación dramática, alta resolución."
+                        "Usa la primera imagen como referencia de estilo. Reemplaza completamente al sujeto 
+                        de esa imagen con la segunda imagen de {nombre}. Mantén exactamente el mismo estilo 
+                        artístico, iluminación y composición de la referencia. Preserva la identidad facial de {nombre}."
                         </code>
                     </div>
                 </div>
+                
+                <!-- IMAGEN DE REFERENCIA -->
+                <hr class="my-4">
+                <h4 class="mb-3"><i class="bi bi-image text-success"></i> Imagen de Referencia (Arte Base)</h4>
+                
+                <div class="mb-4">
+                    <label class="form-label">
+                        <i class="bi bi-upload"></i> Sube tu arte/imagen de referencia
+                    </label>
+                    
+                    <?php if (!empty($carrera['reference_image_path'])): ?>
+                    <div class="mb-3">
+                        <img src="<?php echo BASE_URL . '/' . $carrera['reference_image_path']; ?>" 
+                             class="reference-preview img-thumbnail" 
+                             alt="Imagen de referencia actual">
+                        <div class="mt-2">
+                            <small class="text-success"><i class="bi bi-check-circle"></i> Imagen de referencia actual</small>
+                        </div>
+                    </div>
+                    <?php else: ?>
+                    <div class="alert alert-secondary">
+                        <i class="bi bi-info-circle"></i> No hay imagen de referencia. 
+                        El sistema solo transformará la foto del participante según el prompt.
+                    </div>
+                    <?php endif; ?>
+                    
+                    <input 
+                        type="file" 
+                        class="form-control" 
+                        id="reference_image" 
+                        name="reference_image"
+                        accept="image/jpeg,image/png,image/webp">
+                    
+                    <small class="text-muted d-block mt-2">
+                        <strong>🎨 Qué subir:</strong> Tu arte, ilustración, render 3D, foto estilizada - cualquier imagen 
+                        que sirva como "molde" artístico. La persona del participante reemplazará al sujeto de esta imagen.<br>
+                        <strong>Formato:</strong> JPG, PNG o WebP. Máx 5MB. Recomendado: 1024x1024 o superior.
+                    </small>
+                    
+                    <!-- Preview -->
+                    <div id="new-reference-preview" class="mt-3" style="display: none;">
+                        <p class="text-success"><i class="bi bi-check-circle"></i> Nueva imagen seleccionada:</p>
+                        <img id="preview-img" class="reference-preview img-thumbnail" alt="Preview">
+                    </div>
+                </div>
+                
+                <!-- URL alternativa -->
+                <div class="mb-4">
+                    <label for="reference_image_url" class="form-label">
+                        <i class="bi bi-link-45deg"></i> O usa una URL de imagen
+                    </label>
+                    <input 
+                        type="url" 
+                        class="form-control" 
+                        id="reference_image_url" 
+                        name="reference_image_url"
+                        value="<?php echo htmlspecialchars($carrera['reference_image_url'] ?? ''); ?>"
+                        placeholder="https://ejemplo.com/mi-arte.jpg">
+                    <small class="text-muted">
+                        Alternativamente, pega aquí la URL directa de una imagen en internet. 
+                        Esta tiene prioridad sobre el archivo subido.
+                    </small>
+                </div>
+                
+                <hr class="my-4">
                 
                 <!-- Estado activo -->
                 <div class="mb-4 form-check">
@@ -139,6 +204,19 @@ $user = currentUser();
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <script>
+        // Preview de imagen de referencia
+        document.getElementById('reference_image').addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(event) {
+                    document.getElementById('preview-img').src = event.target.result;
+                    document.getElementById('new-reference-preview').style.display = 'block';
+                };
+                reader.readAsDataURL(file);
+            }
+        });
+        
         // Guardar cambios
         document.getElementById('form-edit-career').addEventListener('submit', async function(e) {
             e.preventDefault();
