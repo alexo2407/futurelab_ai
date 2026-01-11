@@ -246,7 +246,39 @@ class FalAIClient {
             
             if ($status === 'COMPLETED') {
                 echo "✓ Imagen generada exitosamente\n";
-                return $this->processCompletedResult($result);
+                
+                // Cuando status = COMPLETED, necesitamos obtener el resultado
+                // Opción 1: Usar response_url si está disponible
+                // Opción 2: Hacer request a /requests/{id} (sin /status)
+                
+                $resultUrl = $result['response_url'] ?? null;
+                if (!$resultUrl) {
+                    // Construir URL de resultado (sin /status)
+                    $resultUrl = $this->statusUrl . $modelBase . '/requests/' . $requestId;
+                }
+                
+                echo "Obteniendo resultado desde: $resultUrl\n";
+                
+                // Hacer request para obtener el resultado real
+                $resultCh = curl_init($resultUrl);
+                curl_setopt($resultCh, CURLOPT_RETURNTRANSFER, true);
+                curl_setopt($resultCh, CURLOPT_HTTPHEADER, [
+                    'Authorization: Key ' . $this->apiKey
+                ]);
+                curl_setopt($resultCh, CURLOPT_TIMEOUT, 30);
+                
+                $resultResponse = curl_exec($resultCh);
+                $resultHttpCode = curl_getinfo($resultCh, CURLINFO_HTTP_CODE);
+                curl_close($resultCh);
+                
+                if ($resultHttpCode !== 200) {
+                    error_log("fal.ai result fetch failed (HTTP $resultHttpCode): $resultResponse");
+                    return ['success' => false, 'error' => "No se pudo obtener el resultado (HTTP $resultHttpCode)"];
+                }
+                
+                $finalResult = json_decode($resultResponse, true);
+                return $this->processCompletedResult($finalResult);
+                
             } elseif ($status === 'FAILED') {
                 $error = $result['error'] ?? 'Error desconocido';
                 error_log("fal.ai job failed: " . json_encode($result));
