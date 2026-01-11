@@ -195,8 +195,8 @@ class FalAIClient {
      */
     private function waitForResult($requestId, $maxAttempts = 150, $pollInterval = 2) {
         // 150 intentos * 2 segundos = 300 segundos (5 minutos)
-        // Formato correcto: https://queue.fal.run/{modelo}/requests/{request_id}/status
-        $statusUrl = $this->statusUrl . $this->model . '/requests/' . $requestId . '/status';
+        // Formato correcto según docs de fal.ai: https://queue.fal.run/{modelo}/requests/{request_id}
+        $statusUrl = $this->statusUrl . $this->model . '/requests/' . $requestId;
         
         echo "Esperando resultado (máx " . ($maxAttempts * $pollInterval) . "s)...\n";
         echo "Status URL: $statusUrl\n"; // Debug
