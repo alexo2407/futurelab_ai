@@ -14,6 +14,7 @@ if (php_sapi_name() !== 'cli') {
 
 require_once __DIR__ . '/config.php';
 require_once __DIR__ . '/OpenAIClient.php';
+require_once __DIR__ . '/FalAIClient.php';
 require_once __DIR__ . '/../modelo/conexion.php';
 require_once __DIR__ . '/../modelo/ParticipanteModel.php';
 require_once __DIR__ . '/../modelo/CarreraModel.php';
@@ -26,10 +27,12 @@ $participanteModel = new ParticipanteModel();
 $carreraModel = new CarreraModel();
 $configModel = new ConfigModel();
 
-// Leer configuración de OpenAI desde BD
-echo "Leyendo configuración de OpenAI...\n";
+// Leer configuración desde BD
+echo "Leyendo configuración de IA...\n";
 $allConfig = $configModel->getAll();
 
+// Variables de configuración
+$aiProvider = 'openai'; // default
 $openaiApiKey = null;
 $openaiModel = 'gpt-image-1';
 $openaiImageSize = '1024x1024';
@@ -37,8 +40,24 @@ $openaiImageQuality = 'medium';
 $openaiInputFidelity = 'high';
 $openaiEnabled = false;
 
+$falaiApiKey = null;
+$falaiModel = 'fal-ai/gemini-3-pro-image-preview/edit';
+$falaiImageSize = '1024x1024';
+$falaiResolution = '1K';
+$falaiOutputFormat = 'png';
+$falaiNumImages = 1;
+$falaiEnableWebSearch = false;
+$falaiSyncMode = false;
+$falaiEnabled = false;
+
 foreach ($allConfig as $config) {
     switch ($config['config_key']) {
+        // Proveedor general
+        case 'ai_provider':
+            $aiProvider = $config['config_value'];
+            break;
+            
+        // OpenAI
         case 'openai_api_key':
             $openaiApiKey = $config['config_value'];
             break;
@@ -57,30 +76,103 @@ foreach ($allConfig as $config) {
         case 'openai_enabled':
             $openaiEnabled = ($config['config_value'] === '1');
             break;
+            
+        // fal.ai
+        case 'falai_api_key':
+            $falaiApiKey = $config['config_value'];
+            break;
+        case 'falai_model':
+            $falaiModel = $config['config_value'];
+            break;
+        case 'falai_image_size':
+            $falaiImageSize = $config['config_value'];
+            break;
+        case 'falai_resolution':
+            $falaiResolution = $config['config_value'];
+            break;
+        case 'falai_output_format':
+            $falaiOutputFormat = $config['config_value'];
+            break;
+        case 'falai_num_images':
+            $falaiNumImages = (int)$config['config_value'];
+            break;
+        case 'falai_enable_web_search':
+            $falaiEnableWebSearch = ($config['config_value'] === '1');
+            break;
+        case 'falai_sync_mode':
+            $falaiSyncMode = ($config['config_value'] === '1');
+            break;
+        case 'falai_enabled':
+            $falaiEnabled = ($config['config_value'] === '1');
+            break;
     }
 }
 
-if (empty($openaiApiKey)) {
-    die("✗ Error: API Key de OpenAI no configurada.\n" .
-        "   Configúrala desde: " . BASE_URL . "/admin/config\n");
-}
+// Inicializar cliente según el proveedor seleccionado
+$aiClient = null;
 
-if (!$openaiEnabled) {
-    die("✗ Error: OpenAI está deshabilitado.\n" .
-        "   Habilítalo desde: " . BASE_URL . "/admin/config\n");
-}
-
-echo "✓ Usando OpenAI GPT-Image-1\n";
-echo "✓ Modelo: $openaiModel\n";
-echo "✓ Tamaño: $openaiImageSize\n";
-echo "✓ Calidad: $openaiImageQuality\n";
-echo "✓ Fidelidad: $openaiInputFidelity\n";
-
-try {
-    $aiClient = new OpenAIClient($openaiApiKey, $openaiModel, $openaiImageSize, $openaiImageQuality, $openaiInputFidelity);
-    echo "✓ Cliente OpenAI inicializado\n";
-} catch (Exception $e) {
-    die("✗ Error inicializando OpenAI: " . $e->getMessage() . "\n");
+if ($aiProvider === 'falai') {
+    echo "✓ Proveedor seleccionado: fal.ai\n";
+    
+    if (empty($falaiApiKey)) {
+        die("✗ Error: API Key de fal.ai no configurada.\n" .
+            "   Configúrala desde: " . BASE_URL . "/admin/config\n");
+    }
+    
+    if (!$falaiEnabled) {
+        die("✗ Error: fal.ai está deshabilitado.\n" .
+            "   Habilítalo desde: " . BASE_URL . "/admin/config\n");
+    }
+    
+    echo "✓ Modelo: $falaiModel\n";
+    echo "✓ Tamaño: $falaiImageSize\n";
+    echo "✓ Resolución: $falaiResolution\n";
+    echo "✓ Formato: $falaiOutputFormat\n";
+    echo "✓ Núm. imágenes: $falaiNumImages\n";
+    echo "✓ Búsqueda web: " . ($falaiEnableWebSearch ? 'Sí' : 'No') . "\n";
+    echo "✓ Modo síncrono: " . ($falaiSyncMode ? 'Sí' : 'No') . "\n";
+    
+    try {
+        $aiClient = new FalAIClient(
+            $falaiApiKey, 
+            $falaiModel, 
+            $falaiImageSize, 
+            $falaiResolution, 
+            $falaiOutputFormat, 
+            $falaiNumImages, 
+            $falaiEnableWebSearch, 
+            $falaiSyncMode
+        );
+        echo "✓ Cliente fal.ai inicializado\n";
+    } catch (Exception $e) {
+        die("✗ Error inicializando fal.ai: " . $e->getMessage() . "\n");
+    }
+    
+} else {
+    // Default: OpenAI
+    echo "✓ Proveedor seleccionado: OpenAI\n";
+    
+    if (empty($openaiApiKey)) {
+        die("✗ Error: API Key de OpenAI no configurada.\n" .
+            "   Configúrala desde: " . BASE_URL . "/admin/config\n");
+    }
+    
+    if (!$openaiEnabled) {
+        die("✗ Error: OpenAI está deshabilitado.\n" .
+            "   Habilítalo desde: " . BASE_URL . "/admin/config\n");
+    }
+    
+    echo "✓ Modelo: $openaiModel\n";
+    echo "✓ Tamaño: $openaiImageSize\n";
+    echo "✓ Calidad: $openaiImageQuality\n";
+    echo "✓ Fidelidad: $openaiInputFidelity\n";
+    
+    try {
+        $aiClient = new OpenAIClient($openaiApiKey, $openaiModel, $openaiImageSize, $openaiImageQuality, $openaiInputFidelity);
+        echo "✓ Cliente OpenAI inicializado\n";
+    } catch (Exception $e) {
+        die("✗ Error inicializando OpenAI: " . $e->getMessage() . "\n");
+    }
 }
 
 // Crear directorio de resultados si no existe
@@ -194,15 +286,15 @@ while ($continuar) {
             }
             
             
-            echo "[$id] Generando imagen con IA (OpenAI)...\n";
+            echo "[$id] Generando imagen con IA ($aiProvider)...\n";
             
-            // Generar imagen con GPT-Image-1
-            echo "[$id] ✓ Usando GPT-Image-1 con foto del participante\n";
-            
+            // Generar imagen con el proveedor configurado
             $resultado = $aiClient->generateImage(
                 $prompt, 
                 $imageBase64, 
-                $participante['photo_original_mime']
+                $participante['photo_original_mime'],
+                $referenceImageBase64,  // Imagen de referencia (opcional)
+                $referenceImageMimeType // MIME type de referencia
             );
             
             if ($resultado['success']) {

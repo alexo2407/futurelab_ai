@@ -43,8 +43,14 @@ class ConfigControlador {
             $userId = currentUser()['id'];
             $updated = 0;
             
-            // Campos permitidos de OpenAI
-            $configKeys = [
+            // Selector de proveedor de IA
+            if (isset($_POST['ai_provider'])) {
+                $this->configModel->set('ai_provider', $_POST['ai_provider'], $userId);
+                $updated++;
+            }
+            
+            // Campos de OpenAI
+            $openaiKeys = [
                 'openai_api_key',
                 'openai_model',
                 'openai_image_size',
@@ -52,16 +58,44 @@ class ConfigControlador {
                 'openai_input_fidelity'
             ];
             
-            foreach ($configKeys as $key) {
+            foreach ($openaiKeys as $key) {
                 if (isset($_POST[$key])) {
                     $this->configModel->set($key, $_POST[$key], $userId);
                     $updated++;
                 }
             }
             
-            // Manejar checkbox separately
-            $enabled = isset($_POST['openai_enabled']) ? '1' : '0';
-            $this->configModel->set('openai_enabled', $enabled, $userId);
+            // Checkbox OpenAI
+            if (isset($_POST['openai_enabled'])) {
+                $enabled = $_POST['openai_enabled'] ? '1' : '0';
+                $this->configModel->set('openai_enabled', $enabled, $userId);
+            }
+            
+            // Campos de fal.ai
+            $falaiKeys = [
+                'falai_api_key',
+                'falai_model',
+                'falai_image_size',
+                'falai_resolution',
+                'falai_output_format',
+                'falai_num_images'
+            ];
+            
+            foreach ($falaiKeys as $key) {
+                if (isset($_POST[$key])) {
+                    $this->configModel->set($key, $_POST[$key], $userId);
+                    $updated++;
+                }
+            }
+            
+            // Checkboxes de fal.ai
+            $falaiCheckboxes = ['falai_enabled', 'falai_enable_web_search', 'falai_sync_mode'];
+            foreach ($falaiCheckboxes as $key) {
+                if (isset($_POST[$key])) {
+                    $enabled = $_POST[$key] ? '1' : '0';
+                    $this->configModel->set($key, $enabled, $userId);
+                }
+            }
             
             // Log de auditoría
             $this->auditModel->registrar(
@@ -69,7 +103,7 @@ class ConfigControlador {
                 'update',
                 'config',
                 null,
-                ['type' => 'openai_config']
+                ['type' => 'ai_config', 'updated_count' => $updated]
             );
             
             echo json_encode([
@@ -139,6 +173,70 @@ class ConfigControlador {
                 $errorData = json_decode($response, true);
                 $errorMsg = $errorData['error']['message'] ?? 'API Key inválida o sin permisos';
                 throw new Exception($errorMsg);
+            }
+            
+        } catch (Exception $e) {
+            http_response_code(400);
+            echo json_encode([
+                'ok' => false,
+                'error' => $e->getMessage()
+            ]);
+        }
+    }
+    
+    /**
+     * API: Prueba la conexión con fal.ai
+     */
+    public function testFalAI() {
+        header('Content-Type: application/json');
+        
+        requireRole('admin');
+        
+        try {
+            if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+                throw new Exception('Método no permitido');
+            }
+
+            $apiKey = $_POST['api_key'] ?? '';
+            
+            if (empty($apiKey)) {
+                // Intentar obtener de BD si no se envía
+                $apiKey = $this->configModel->get('falai_api_key');
+            }
+            
+            if (empty($apiKey)) {
+                throw new Exception('API Key es requerida');
+            }
+            
+            // Probar conexión con fal.ai
+            // Endpoint para listar modelos o hacer un ping
+            $ch = curl_init('https://queue.fal.run/');
+            curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+            curl_setopt($ch, CURLOPT_HTTPHEADER, [
+                'Authorization: Key ' . $apiKey
+            ]);
+            curl_setopt($ch, CURLOPT_TIMEOUT, 10);
+            
+            $response = curl_exec($ch);
+            $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+            $curlError = curl_error($ch);
+            curl_close($ch);
+            
+            if ($curlError) {
+                throw new Exception('Error de conexión: ' . $curlError);
+            }
+            
+            // fal.ai retorna 200 o 401 si key es inválida
+            if ($httpCode === 200 || $httpCode === 404) {
+                // 404 es OK (endpoint raíz no existe, pero key es válida)
+                echo json_encode([
+                    'ok' => true,
+                    'message' => 'Conexión exitosa! API Key válida de fal.ai.'
+                ]);
+            } else if ($httpCode === 401 || $httpCode === 403) {
+                throw new Exception('API Key inválida o sin permisos');
+            } else {
+                throw new Exception("Error HTTP: $httpCode");
             }
             
         } catch (Exception $e) {

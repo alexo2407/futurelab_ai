@@ -1,7 +1,7 @@
 # Habilitar rewrite engine
 <IfModule mod_rewrite.c>
     RewriteEngine On
-    RewriteBase /futurelab-ai/
+    RewriteBase /futurelab_ai/
     
     # Redirigir todo a index.php excepto archivos existentes
     RewriteCond %{REQUEST_FILENAME} !-f

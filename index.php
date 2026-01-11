@@ -32,7 +32,7 @@ $requestMethod = $_SERVER['REQUEST_METHOD'];
 $requestUri = strtok($requestUri, '?');
 
 // Remover el prefijo del proyecto si existe
-$basePath = '/futurelab-ai';
+$basePath = '/futurelab_ai';
 if (strpos($requestUri, $basePath) === 0) {
     $requestUri = substr($requestUri, strlen($basePath));
 }
@@ -156,6 +156,12 @@ try {
     if ($requestUri === '/api/config/test-openai' && $requestMethod === 'POST') {
         $controller = new ConfigControlador();
         $controller->testOpenAI();
+        exit;
+    }
+    
+    if ($requestUri === '/api/config/test-falai' && $requestMethod === 'POST') {
+        $controller = new ConfigControlador();
+        $controller->testFalAI();
         exit;
     }
     

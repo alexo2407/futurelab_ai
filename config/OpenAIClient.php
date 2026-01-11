@@ -37,10 +37,12 @@ class OpenAIClient {
      * @param string $prompt Descripción de la imagen a generar
      * @param string|null $imageBase64 Imagen base64 opcional para edición/transformación
      * @param string|null $imageMimeType MIME type de la imagen (image/jpeg, image/png)
+     * @param string|null $referenceImageBase64 Segunda imagen de referencia (ignorada en OpenAI, usado por fal.ai)
+     * @param string|null $referenceMimeType MIME type de la imagen de referencia
      * @return array Respuesta de la API con imagen en base64
      * @throws Exception Si hay error en la API
      */
-    public function generateImage($prompt, $imageBase64 = null, $imageMimeType = 'image/jpeg') {
+    public function generateImage($prompt, $imageBase64 = null, $imageMimeType = 'image/jpeg', $referenceImageBase64 = null, $referenceMimeType = 'image/jpeg') {
         $prompt = trim($prompt);
         if (empty($prompt)) {
             return ['success' => false, 'error' => 'El prompt no puede estar vacío'];

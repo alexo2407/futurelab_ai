@@ -109,8 +109,300 @@ foreach ($configs as $config) {
     </div>
     
     <div class="container">
-        <!-- API de OpenAI -->
+        <!-- Selector de Proveedor de IA -->
         <div class="config-card">
+            <h3><i class="bi bi-cpu text-primary me-2"></i>Proveedor de IA para Generación de Imágenes</h3>
+            <p class="text-muted">Selecciona el proveedor de IA que deseas usar para generar las imágenes de participantes</p>
+            
+            <form id="form-ai-provider">
+                <div class="mb-3">
+                    <label for="ai_provider" class="form-label">
+                        <i class="bi bi-gear"></i> Proveedor Activo
+                    </label>
+                    <select class="form-select" id="ai_provider" name="ai_provider">
+                        <?php
+                        $currentProvider = 'openai';
+                        foreach ($configs as $c) {
+                            if ($c['config_key'] === 'ai_provider') {
+                                $currentProvider = $c['config_value'];
+                            }
+                        }
+                        
+                        $providers = [
+                            'openai' => 'OpenAI (GPT-Image-1 / DALL-E 3)',
+                            'falai' => 'fal.ai (Gemini 3 Pro Image Preview)'
+                        ];
+                        
+                        foreach ($providers as $value => $label) {
+                            $selected = ($value === $currentProvider) ? 'selected' : '';
+                            echo "<option value='$value' $selected>$label</option>";
+                        }
+                        ?>
+                    </select>
+                    <div class="form-text">
+                        Cambia entre proveedores según tus necesidades. Asegúrate de configurar el API Key correspondiente.
+                    </div>
+                </div>
+                
+                <button type="submit" class="btn btn-primary">
+                    <i class="bi bi-save"></i> Guardar Proveedor
+                </button>
+            </form>
+        </div>
+        
+        <!-- API de fal.ai -->
+        <div class="config-card" id="falai-config">
+            <h3><i class="bi bi-image text-primary me-2"></i>Configuración de fal.ai</h3>
+            <p class="text-muted">Configura tu integración con fal.ai para generación de imágenes con Gemini 3 Pro Image Preview</p>
+            
+            <form id="form-falai-config">
+                <div class="mb-3">
+                    <label for="falai_api_key" class="form-label">
+                        <i class="bi bi-key"></i> API Key
+                    </label>
+                    <div class="input-group">
+                        <input 
+                            type="password" 
+                            class="form-control" 
+                            id="falai_api_key" 
+                            name="falai_api_key"
+                            value="<?php 
+                                foreach ($configs as $c) {
+                                    if ($c['config_key'] === 'falai_api_key') {
+                                        echo htmlspecialchars($c['config_value']);
+                                    }
+                                }
+                            ?>"
+                            placeholder="Ingresa tu API Key de fal.ai">
+                        <button class="btn btn-outline-secondary" type="button" id="toggle-falai-key">
+                            <i class="bi bi-eye" id="eye-icon-falai"></i>
+                        </button>
+                    </div>
+                    <small class="text-muted">
+                        Obtén tu API key en: 
+                        <a href="https://fal.ai/dashboard/keys" target="_blank">
+                            fal.ai Dashboard
+                        </a>
+                    </small>
+                </div>
+                
+                <div class="mb-3">
+                    <label for="falai_model" class="form-label">
+                        <i class="bi bi-cpu"></i> Modelo
+                    </label>
+                    <select class="form-select" id="falai_model" name="falai_model">
+                        <?php
+                        $currentModel = 'fal-ai/gemini-3-pro-image-preview/edit';
+                        foreach ($configs as $c) {
+                            if ($c['config_key'] === 'falai_model') {
+                                $currentModel = $c['config_value'];
+                            }
+                        }
+                        
+                        $models = [
+                            'fal-ai/gemini-3-pro-image-preview/edit' => 'Gemini 3 Pro Image Preview (Edit)',
+                            'fal-ai/flux-pro/v1.1' => 'FLUX Pro v1.1',
+                            'fal-ai/flux/dev' => 'FLUX Dev'
+                        ];
+                        
+                        foreach ($models as $value => $label) {
+                            $selected = ($value === $currentModel) ? 'selected' : '';
+                            echo "<option value='$value' $selected>$label</option>";
+                        }
+                        ?>
+                    </select>
+                    <div class="form-text">
+                        <strong>Gemini 3 Pro:</strong> Recomendado para transformación de imágenes con alta fidelidad facial.
+                    </div>
+                </div>
+                
+                <div class="mb-3">
+                    <label for="falai_image_size" class="form-label">
+                        <i class="bi bi-aspect-ratio"></i> Tamaño de Imagen
+                    </label>
+                    <select class="form-select" id="falai_image_size" name="falai_image_size">
+                        <?php
+                        $currentSize = '1024x1024';
+                        foreach ($configs as $c) {
+                            if ($c['config_key'] === 'falai_image_size') {
+                                $currentSize = $c['config_value'];
+                            }
+                        }
+                        
+                        $sizes = [
+                            '1024x1024' => '1024x1024 (Cuadrado 1:1)',
+                            '1024x1792' => '1024x1792 (Vertical 9:16 - Historias)',
+                            '1792x1024' => '1792x1024 (Horizontal 16:9)'
+                        ];
+                        
+                        foreach ($sizes as $value => $label) {
+                            $selected = ($value === $currentSize) ? 'selected' : '';
+                            echo "<option value='$value' $selected>$label</option>";
+                        }
+                        ?>
+                    </select>
+                </div>
+                
+                <div class="mb-3">
+                    <label for="falai_resolution" class="form-label">
+                        <i class="bi bi-stars"></i> Resolución
+                    </label>
+                    <select class="form-select" id="falai_resolution" name="falai_resolution">
+                        <?php
+                        $currentResolution = '1K';
+                        foreach ($configs as $c) {
+                            if ($c['config_key'] === 'falai_resolution') {
+                                $currentResolution = $c['config_value'];
+                            }
+                        }
+                        
+                        $resolutions = [
+                            '1K' => '1K (Estándar - Más rápido y económico)',
+                            '2K' => '2K (Alta calidad)',
+                            '4K' => '4K (Ultra HD - Más lento y costoso)'
+                        ];
+                        
+                        foreach ($resolutions as $value => $label) {
+                            $selected = ($value === $currentResolution) ? 'selected' : '';
+                            echo "<option value='$value' $selected>$label</option>";
+                        }
+                        ?>
+                    </select>
+                    <div class="form-text">
+                        Mayor resolución = mejor calidad pero más tiempo y costo por imagen.
+                    </div>
+                </div>
+                
+                <div class="mb-3">
+                    <label for="falai_output_format" class="form-label">
+                        <i class="bi bi-file-earmark-image"></i> Formato de Salida
+                    </label>
+                    <select class="form-select" id="falai_output_format" name="falai_output_format">
+                        <?php
+                        $currentFormat = 'png';
+                        foreach ($configs as $c) {
+                            if ($c['config_key'] === 'falai_output_format') {
+                                $currentFormat = $c['config_value'];
+                            }
+                        }
+                        
+                        $formats = [
+                            'png' => 'PNG (Recomendado - Sin pérdida)',
+                            'jpeg' => 'JPEG (Menor tamaño de archivo)',
+                            'webp' => 'WebP (Moderno y eficiente)'
+                        ];
+                        
+                        foreach ($formats as $value => $label) {
+                            $selected = ($value === $currentFormat) ? 'selected' : '';
+                            echo "<option value='$value' $selected>$label</option>";
+                        }
+                        ?>
+                    </select>
+                </div>
+                
+                <div class="mb-3">
+                    <label for="falai_num_images" class="form-label">
+                        <i class="bi bi-images"></i> Número de Imágenes
+                    </label>
+                    <select class="form-select" id="falai_num_images" name="falai_num_images">
+                        <?php
+                        $currentNum = '1';
+                        foreach ($configs as $c) {
+                            if ($c['config_key'] === 'falai_num_images') {
+                                $currentNum = $c['config_value'];
+                            }
+                        }
+                        
+                        for ($i = 1; $i <= 4; $i++) {
+                            $selected = ($i == $currentNum) ? 'selected' : '';
+                            $cost = $i > 1 ? " (x{$i} costo)" : '';
+                            echo "<option value='$i' $selected>{$i} imagen" . ($i > 1 ? 'es' : '') . "$cost</option>";
+                        }
+                        ?>
+                    </select>
+                    <div class="form-text">
+                        Generar múltiples variaciones (aumenta el costo proporcionalmente).
+                    </div>
+                </div>
+                
+                <div class="mb-3 form-check">
+                    <input 
+                        type="checkbox" 
+                        class="form-check-input" 
+                        id="falai_enable_web_search" 
+                        name="falai_enable_web_search"
+                        <?php
+                        foreach ($configs as $c) {
+                            if ($c['config_key'] === 'falai_enable_web_search' && $c['config_value'] === '1') {
+                                echo 'checked';
+                            }
+                        }
+                        ?>>
+                    <label class="form-check-label" for="falai_enable_web_search">
+                        <i class="bi bi-search"></i> Habilitar Búsqueda Web
+                    </label>
+                    <div class="form-text">
+                        Permite al modelo usar información reciente de internet para mejorar resultados.
+                    </div>
+                </div>
+                
+                <div class="mb-3 form-check">
+                    <input 
+                        type="checkbox" 
+                        class="form-check-input" 
+                        id="falai_sync_mode" 
+                        name="falai_sync_mode"
+                        <?php
+                        foreach ($configs as $c) {
+                            if ($c['config_key'] === 'falai_sync_mode' && $c['config_value'] === '1') {
+                                echo 'checked';
+                            }
+                        }
+                        ?>>
+                    <label class="form-check-label" for="falai_sync_mode">
+                        <i class="bi bi-lightning-charge"></i> Modo Síncrono (Experimental)
+                    </label>
+                    <div class="form-text">
+                        Devuelve la imagen como data URI directamente (no se guarda en historial).
+                    </div>
+                </div>
+                
+                <div class="mb-3 form-check">
+                    <input 
+                        type="checkbox" 
+                        class="form-check-input" 
+                        id="falai_enabled" 
+                        name="falai_enabled"
+                        <?php
+                        foreach ($configs as $c) {
+                            if ($c['config_key'] === 'falai_enabled' && $c['config_value'] === '1') {
+                                echo 'checked';
+                            }
+                        }
+                        ?>>
+                    <label class="form-check-label" for="falai_enabled">
+                        Habilitar integración con fal.ai
+                    </label>
+                </div>
+                
+                <div class="alert alert-info">
+                    <i class="bi bi-info-circle"></i> 
+                    <strong>Ventaja de fal.ai:</strong> Soporta múltiples imágenes de entrada (participante + imagen de referencia de la carrera) para mejores resultados.
+                </div>
+                
+                <div class="d-flex gap-2">
+                    <button type="submit" class="btn btn-success">
+                        <i class="bi bi-save"></i> Guardar Configuración
+                    </button>
+                    <button type="button" class="btn btn-info" id="btn-test-falai">
+                        <i class="bi bi-lightning"></i> Probar Conexión
+                    </button>
+                </div>
+            </form>
+        </div>
+        
+        <!-- API de OpenAI -->
+        <div class="config-card" id="openai-config">
             <h3><i class="bi bi-image text-success me-2"></i>Configuración de OpenAI GPT-Image-1</h3>
             <p class="text-muted">Configura tu integración con OpenAI para generación de imágenes con GPT-Image-1 (multimodal)</p>
             
@@ -319,6 +611,34 @@ foreach ($configs as $config) {
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <script>
+        // ======================
+        // MOSTRAR/OCULTAR SEGÚN PROVEEDOR SELECCIONADO
+        // ======================
+        
+        function toggleProviderConfigs() {
+            const provider = document.getElementById('ai_provider').value;
+            const openaiConfig = document.getElementById('openai-config');
+            const falaiConfig = document.getElementById('falai-config');
+            
+            if (provider === 'falai') {
+                // Mostrar solo fal.ai
+                if (falaiConfig) falaiConfig.style.display = 'block';
+                if (openaiConfig) openaiConfig.style.display = 'none';
+            } else {
+                // Mostrar solo OpenAI (default)
+                if (openaiConfig) openaiConfig.style.display = 'block';
+                if (falaiConfig) falaiConfig.style.display = 'none';
+            }
+        }
+        
+        // Ejecutar al cargar la página
+        document.addEventListener('DOMContentLoaded', function() {
+            toggleProviderConfigs();
+        });
+        
+        // Ejecutar cuando cambie el selector
+        document.getElementById('ai_provider').addEventListener('change', toggleProviderConfigs);
+        
         // Toggle OpenAI password visibility
         document.getElementById('toggle-openai-key').addEventListener('click', function() {
             const input = document.getElementById('openai_api_key');
@@ -426,6 +746,169 @@ foreach ($configs as $config) {
                     icon: 'error',
                     title: 'Error de Conexión',
                     text: error.message || 'No se pudo conectar con OpenAI. Verifica tu API Key.',
+                    confirmButtonColor: '#dc3545'
+                });
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = originalText;
+            }
+        });
+        
+        // ======================
+        // FAL.AI HANDLERS
+        // ======================
+        
+        // Toggle fal.ai password visibility
+        document.getElementById('toggle-falai-key').addEventListener('click', function() {
+            const input = document.getElementById('falai_api_key');
+            const icon = document.getElementById('eye-icon-falai');
+            
+            if (input.type === 'password') {
+                input.type = 'text';
+                icon.classList.remove('bi-eye');
+                icon.classList.add('bi-eye-slash');
+            } else {
+                input.type = 'password';
+                icon.classList.remove('bi-eye-slash');
+                icon.classList.add('bi-eye');
+            }
+        });
+        
+        // Guardar selector de proveedor
+        document.getElementById('form-ai-provider').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const formData = new FormData(this);
+            const submitBtn = this.querySelector('button[type="submit"]');
+            const originalText = submitBtn.innerHTML;
+            
+            submitBtn.disabled = true;
+            submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Guardando...';
+            
+            try {
+                const response = await fetch('<?php echo BASE_URL; ?>/api/config/save', {
+                    method: 'POST',
+                    body: formData
+                });
+                
+                const data = await response.json();
+                
+                if (data.ok) {
+                    Swal.fire({
+                        icon: 'success',
+                        title: '¡Guardado!',
+                        text: 'Proveedor de IA actualizado exitosamente',
+                        confirmButtonColor: '#28a745',
+                        timer: 2000
+                    });
+                } else {
+                    throw new Error(data.error || 'Error al guardar');
+                }
+                
+            } catch (error) {
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Error',
+                    text: error.message,
+                    confirmButtonColor: '#dc3545'
+                });
+            } finally {
+                submitBtn.disabled = false;
+                submitBtn.innerHTML = originalText;
+            }
+        });
+        
+        // Guardar configuración de fal.ai
+        document.getElementById('form-falai-config').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const formData = new FormData(this);
+            const submitBtn = this.querySelector('button[type="submit"]');
+            const originalText = submitBtn.innerHTML;
+            
+            submitBtn.disabled = true;
+            submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Guardando...';
+            
+            try {
+                const response = await fetch('<?php echo BASE_URL; ?>/api/config/save', {
+                    method: 'POST',
+                    body: formData
+                });
+                
+                const data = await response.json();
+                
+                if (data.ok) {
+                    Swal.fire({
+                        icon: 'success',
+                        title: '¡Guardado!',
+                        text: 'Configuración de fal.ai guardada exitosamente',
+                        confirmButtonColor: '#28a745',
+                        timer: 2000
+                    });
+                } else {
+                    throw new Error(data.error || 'Error al guardar');
+                }
+                
+            } catch (error) {
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Error',
+                    text: error.message,
+                    confirmButtonColor: '#dc3545'
+                });
+            } finally {
+                submitBtn.disabled = false;
+                submitBtn.innerHTML = originalText;
+            }
+        });
+        
+        // Probar conexión fal.ai
+        document.getElementById('btn-test-falai').addEventListener('click', async function() {
+            const apiKey = document.getElementById('falai_api_key').value;
+            
+            if (!apiKey) {
+                Swal.fire({
+                    icon: 'warning',
+                    title: 'API Key Requerida',
+                    text: 'Por favor ingresa tu API Key de fal.ai primero',
+                    confirmButtonColor: '#28a745'
+                });
+                return;
+            }
+            
+            const btn = this;
+            const originalText = btn.innerHTML;
+            
+            btn.disabled = true;
+            btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Probando...';
+            
+            try {
+                const formData = new FormData();
+                formData.append('api_key', apiKey);
+                
+                const response = await fetch('<?php echo BASE_URL; ?>/api/config/test-falai', {
+                    method: 'POST',
+                    body: formData
+                });
+                
+                const data = await response.json();
+                
+                if (data.ok) {
+                    Swal.fire({
+                        icon: 'success',
+                        title: '¡Conexión Exitosa!',
+                        text: data.message,
+                        confirmButtonColor: '#28a745'
+                    });
+                } else {
+                    throw new Error(data.error || 'Error al probar conexión');
+                }
+                
+            } catch (error) {
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Error de Conexión',
+                    text: error.message || 'No se pudo conectar con fal.ai. Verifica tu API Key.',
                     confirmButtonColor: '#dc3545'
                 });
             } finally {

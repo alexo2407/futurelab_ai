@@ -21,7 +21,7 @@ define('RESULTS_PATH', STORAGE_PATH . '/results');
 define('QR_PATH', STORAGE_PATH . '/qr');
 
 // URLs públicas para archivos
-define('BASE_URL', 'http://localhost/futurelab-ai');
+define('BASE_URL', 'http://localhost/futurelab_ai');
 define('STORAGE_URL', BASE_URL . '/storage');
 
 // Configuración de Uploads
