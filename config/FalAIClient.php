@@ -195,8 +195,24 @@ class FalAIClient {
      */
     private function waitForResult($requestId, $maxAttempts = 150, $pollInterval = 2) {
         // 150 intentos * 2 segundos = 300 segundos (5 minutos)
-        // Formato correcto según docs de fal.ai: https://queue.fal.run/{modelo}/requests/{request_id}
-        $statusUrl = $this->statusUrl . $this->model . '/requests/' . $requestId;
+        // Según docs oficiales de fal.ai:
+        // Submit: https://queue.fal.run/fal-ai/gemini-3-pro-image-preview/edit
+        // Status: https://queue.fal.run/fal-ai/gemini-3-pro-image-preview/requests/{id}/status
+        // Nota: El path de status NO incluye /edit, solo el modelo base
+        
+        // Extraer modelo base (sin el último segmento si es /edit, /dev, etc)
+        $modelParts = explode('/', $this->model);
+        $lastPart = end($modelParts);
+        
+        // Si el último segmento es 'edit', 'dev', etc., removerlo para el endpoint de requests
+        if (in_array($lastPart, ['edit', 'dev', 'pro', 'v1', 'v1.1'])) {
+            array_pop($modelParts);
+            $modelBase = implode('/', $modelParts);
+        } else {
+            $modelBase = $this->model;
+        }
+        
+        $statusUrl = $this->statusUrl . $modelBase . '/requests/' . $requestId . '/status';
         
         echo "Esperando resultado (máx " . ($maxAttempts * $pollInterval) . "s)...\n";
         echo "Status URL: $statusUrl\n"; // Debug
