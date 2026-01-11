@@ -13,8 +13,10 @@ class FalAIClient {
     private $numImages;
     private $enableWebSearch;
     private $syncMode;
+    
+    // Endpoints correctos de fal.ai
     private $queueUrl = 'https://queue.fal.run/';
-    private $statusUrlBase = 'https://queue.fal.run/';
+    private $statusUrl = 'https://queue.fal.run/';
     
     /**
      * Constructor
@@ -193,9 +195,11 @@ class FalAIClient {
      */
     private function waitForResult($requestId, $maxAttempts = 150, $pollInterval = 2) {
         // 150 intentos * 2 segundos = 300 segundos (5 minutos)
-        $statusUrl = $this->statusUrlBase . 'requests/' . $requestId . '/status';
+        // Formato correcto: https://queue.fal.run/{modelo}/requests/{request_id}/status
+        $statusUrl = $this->statusUrl . $this->model . '/requests/' . $requestId . '/status';
         
         echo "Esperando resultado (máx " . ($maxAttempts * $pollInterval) . "s)...\n";
+        echo "Status URL: $statusUrl\n"; // Debug
         
         for ($i = 0; $i < $maxAttempts; $i++) {
             $ch = curl_init($statusUrl);
