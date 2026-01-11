@@ -189,10 +189,13 @@ class FalAIClient {
     }
     
     /**
-     * Esperar resultado de la cola (polling)
+     * Esperar resultado del trabajo en cola
      */
-    private function waitForResult($requestId, $maxAttempts = 60, $pollInterval = 2) {
+    private function waitForResult($requestId, $maxAttempts = 150, $pollInterval = 2) {
+        // 150 intentos * 2 segundos = 300 segundos (5 minutos)
         $statusUrl = $this->statusUrlBase . 'requests/' . $requestId . '/status';
+        
+        echo "Esperando resultado (máx " . ($maxAttempts * $pollInterval) . "s)...\n";
         
         for ($i = 0; $i < $maxAttempts; $i++) {
             $ch = curl_init($statusUrl);
@@ -200,34 +203,41 @@ class FalAIClient {
             curl_setopt($ch, CURLOPT_HTTPHEADER, [
                 'Authorization: Key ' . $this->apiKey
             ]);
-            curl_setopt($ch, CURLOPT_TIMEOUT, 10);
+            curl_setopt($ch, CURLOPT_TIMEOUT, 30);
             
             $response = curl_exec($ch);
             $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
             curl_close($ch);
             
             if ($httpCode !== 200) {
+                error_log("fal.ai status check failed (HTTP $httpCode): $response");
                 sleep($pollInterval);
                 continue;
             }
             
             $result = json_decode($response, true);
-            $status = $result['status'] ?? 'unknown';
+            $status = $result['status'] ?? 'UNKNOWN';
             
-            if ($status === 'COMPLETED') {
-                // Imagen lista, descargar resultado
-                return $this->processCompletedResult($result);
-                
-            } elseif ($status === 'FAILED') {
-                $errorMsg = $result['error'] ?? 'Error desconocido en procesamiento';
-                return ['success' => false, 'error' => $errorMsg];
+            // Mostrar progreso cada 10 intentos (20 segundos)
+            if ($i % 10 === 0 && $i > 0) {
+                $elapsed = $i * $pollInterval;
+                echo "  ... esperando {$elapsed}s (estado: $status)\n";
             }
             
-            // Estado: IN_QUEUE o IN_PROGRESS
+            if ($status === 'COMPLETED') {
+                echo "✓ Imagen generada exitosamente\n";
+                return $this->processCompletedResult($result);
+            } elseif ($status === 'FAILED') {
+                $error = $result['error'] ?? 'Error desconocido';
+                error_log("fal.ai job failed: " . json_encode($result));
+                return ['success' => false, 'error' => "fal.ai falló: $error"];
+            }
+            
             sleep($pollInterval);
         }
         
-        return ['success' => false, 'error' => 'Timeout esperando resultado (máx 120s)'];
+        $totalTime = $maxAttempts * $pollInterval;
+        return ['success' => false, 'error' => "Timeout esperando resultado (máx {$totalTime}s). El trabajo puede estar en cola todavía."];
     }
     
     /**
