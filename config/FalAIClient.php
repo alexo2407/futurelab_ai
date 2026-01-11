@@ -295,30 +295,35 @@ class FalAIClient {
      * Procesar resultado completado
      */
     private function processCompletedResult($result) {
-        // Schema de fal.ai:
+        // Formato REAL de fal.ai (verificado en la práctica):
         // {
-        //   "output": {
-        //     "images": [
-        //       {
-        //         "url": "https://...",
-        //         "content_type": "image/png",
-        //         "file_name": "...",
-        //         "width": 1024,
-        //         "height": 1024
-        //       }
-        //     ],
-        //     "description": "..."
-        //   }
+        //   "images": [
+        //     {
+        //       "url": "https://...",
+        //       "content_type": "image/jpeg",
+        //       "file_name": "...",
+        //       "width": 1024,
+        //       "height": 1024
+        //     }
+        //   ],
+        //   "description": "..."
         // }
         
-        $output = $result['output'] ?? null;
-        
-        if (!$output || !isset($output['images'])) {
-            error_log("fal.ai result missing output.images: " . json_encode($result));
-            return ['success' => false, 'error' => 'No se encontró output.images en resultado'];
+        // Manejar ambos formatos por si cambia la API
+        if (isset($result['output'])) {
+            // Formato con wrapper "output"
+            $data = $result['output'];
+        } else {
+            // Formato directo (actual)
+            $data = $result;
         }
         
-        $images = $output['images'];
+        if (!isset($data['images'])) {
+            error_log("fal.ai result missing images: " . json_encode($result));
+            return ['success' => false, 'error' => 'No se encontró el campo images en resultado'];
+        }
+        
+        $images = $data['images'];
         
         if (empty($images) || !isset($images[0]['url'])) {
             error_log("fal.ai images array empty or missing URL: " . json_encode($images));
@@ -339,7 +344,7 @@ class FalAIClient {
         return [
             'success' => true,
             'imageData' => $imageBase64,
-            'revised_prompt' => $output['description'] ?? '',
+            'revised_prompt' => $data['description'] ?? '',
             'description' => "Generado con fal.ai - {$this->model}",
             'metadata' => [
                 'width' => $images[0]['width'] ?? null,
