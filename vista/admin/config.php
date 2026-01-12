@@ -799,28 +799,6 @@ foreach ($configs as $config) {
             }
         });
         
-        // Auto-guardar modo contingencia
-        document.getElementById('ai_fallback_mode').addEventListener('change', function() {
-            const isChecked = this.checked;
-            const modeName = isChecked ? 'ACTIVADO' : 'DESACTIVADO';
-            
-            // Simular submit del formulario
-            document.getElementById('form-ai-provider').dispatchEvent(new Event('submit'));
-            
-            // Notificación visual rápida
-            const Toast = Swal.mixin({
-                toast: true,
-                position: 'top-end',
-                showConfirmButton: false,
-                timer: 3000,
-                timerProgressBar: true
-            });
-            
-            Toast.fire({
-                icon: isChecked ? 'warning' : 'info',
-                title: `Modo Contingencia ${modeName}`
-            });
-        });
         
         // Guardar configuración de fal.ai
         document.getElementById('form-falai-config').addEventListener('submit', async function(e) {
