@@ -194,7 +194,9 @@ class CarreraControlador {
                 throw new Exception('Método no permitido');
             }
             
-            $id = (int)($_POST['id'] ?? 0);
+            // Leer JSON input
+            $input = json_decode(file_get_contents('php://input'), true);
+            $id = (int)($input['id'] ?? 0);
             
             if ($id <= 0) {
                 throw new Exception('ID inválido');
@@ -220,6 +222,147 @@ class CarreraControlador {
             echo json_encode([
                 'ok' => true,
                 'message' => 'Imagen eliminada'
+            ]);
+            
+        } catch (Exception $e) {
+            http_response_code(400);
+            echo json_encode([
+                'ok' => false,
+                'error' => $e->getMessage()
+            ]);
+        }
+    }
+    
+    /**
+     * API: DataTables endpoint para lista de carreras
+     */
+    public function datatables() {
+        header('Content-Type: application/json');
+        
+        requireRole('admin');
+        
+        try {
+            $carreras = $this->carreraModel->obtenerTodas();
+            
+            echo json_encode([
+                'data' => $carreras
+            ]);
+            
+        } catch (Exception $e) {
+            http_response_code(500);
+            echo json_encode([
+                'error' => $e->getMessage()
+            ]);
+        }
+    }
+    
+    /**
+     * API: Crea una nueva carrera
+     */
+    public function crear() {
+        header('Content-Type: application/json');
+        
+        requireRole('admin');
+        
+        try {
+            if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+                throw new Exception('Método no permitido');
+            }
+            
+            $input = json_decode(file_get_contents('php://input'), true);
+            $name = trim($input['name'] ?? '');
+            $category = trim($input['category'] ?? '');
+            
+            if (empty($name)) {
+                throw new Exception('El nombre es requerido');
+            }
+            
+            $resultado = $this->carreraModel->crear([
+                'name' => $name,
+                'category' => $category,
+                'is_active' => 1
+            ]);
+            
+            if (!$resultado) {
+                throw new Exception('Error al crear la carrera');
+            }
+            
+            // Log
+            $this->auditModel->registrar(
+                currentUser()['id'],
+                'create',
+                'career',
+                $resultado,
+                ['name' => $name]
+            );
+            
+            echo json_encode([
+                'ok' => true,
+                'id' => $resultado,
+                'message' => 'Carrera creada exitosamente'
+            ]);
+            
+        } catch (Exception $e) {
+            http_response_code(400);
+            echo json_encode([
+                'ok' => false,
+                'error' => $e->getMessage()
+            ]);
+        }
+    }
+    
+    /**
+     * API: Elimina una carrera
+     */
+    public function eliminar() {
+        header('Content-Type: application/json');
+        
+        requireRole('admin');
+        
+        try {
+            if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+                throw new Exception('Método no permitido');
+            }
+            
+            $input = json_decode(file_get_contents('php://input'), true);
+            $id = (int)($input['id'] ?? 0);
+            
+            if ($id <= 0) {
+                throw new Exception('ID inválido');
+            }
+            
+            $carrera = $this->carreraModel->obtenerPorId($id);
+            
+            if (!$carrera) {
+                throw new Exception('Carrera no encontrada');
+            }
+            
+            // Eliminar imagen de referencia si existe
+            if (!empty($carrera['reference_image_path'])) {
+                $filePath = STORAGE_PATH . str_replace('/storage', '', $carrera['reference_image_path']);
+                if (file_exists($filePath)) {
+                    @unlink($filePath);
+                }
+            }
+            
+            $resultado = $this->carreraModel->eliminar($id);
+            
+            if (!$resultado) {
+                throw new Exception('Error al eliminar la carrera');
+            }
+            
+            // Log
+            $this->auditModel->registrar(
+                currentUser()['id'],
+                'delete',
+                'career',
+                $id,
+                ['name' => $carrera['name']]
+            );
+            
+            echo json_encode([
+                'ok' => true,
+                'message' => 'Carrera eliminada exitosamente'
             ]);
             
         } catch (Exception $e) {

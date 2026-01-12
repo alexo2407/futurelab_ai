@@ -106,15 +106,28 @@ class FalAIClient {
             throw new Exception('No se pudieron subir las imágenes');
         }
         
+        
         // Mapear tamaño a aspect_ratio de fal.ai
+        // Soporta: auto, 21:9, 16:9, 3:2, 4:3, 5:4, 1:1, 4:5, 3:4, 2:3, 9:16
         $aspectRatioMap = [
             '1024x1024' => '1:1',
             '1024x1792' => '9:16',
             '1792x1024' => '16:9',
             '1024x1536' => '2:3',
-            '1536x1024' => '3:2'
+            '1536x1024' => '3:2',
+            '1024x768' => '4:3',
+            '768x1024' => '3:4',
+            '1024x819' => '5:4',
+            '819x1024' => '4:5',
+            '2560x1080' => '21:9'
         ];
-        $aspectRatio = $aspectRatioMap[$this->imageSize] ?? 'auto';
+        
+        // Si el tamaño configurado es directamente un aspect ratio, usarlo
+        if (preg_match('/^\d+:\d+$/', $this->imageSize)) {
+            $aspectRatio = $this->imageSize;
+        } else {
+            $aspectRatio = $aspectRatioMap[$this->imageSize] ?? 'auto';
+        }
         
         // Enviar a cola con parámetros correctos
         $endpoint = $this->queueUrl . $this->model;
@@ -136,6 +149,9 @@ class FalAIClient {
         if ($this->syncMode) {
             $payload['sync_mode'] = true;
         }
+        
+        // DEBUG: Imprimir payload para verificar aspect_ratio
+        error_log("DEBUG FalAI Payload: " . json_encode($payload));
         
         $ch = curl_init($endpoint);
         curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);

@@ -20,45 +20,9 @@ foreach ($configs as $config) {
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
     <link href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="<?php echo BASE_URL; ?>/vista/css/estilos.css">
     
     <style>
-        :root {
-            --primary-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-        }
-        
-        body {
-            background: #f5f7fa;
-        }
-        
-        .header {
-            background: var(--primary-gradient);
-            color: white;
-            padding: 20px;
-            margin-bottom: 30px;
-            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
-        }
-        
-        .config-card {
-            background: var(--bg-card);
-            border: 1px solid var(--border-card);
-            border-radius: 15px;
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.6);
-            padding: 30px;
-            margin-bottom: 20px;
-            color: var(--text-primary);
-        }
-        
-        .btn-test {
-            background: #28a745;
-            color: white;
-            border: none;
-        }
-        
-        .btn-test:hover {
-            background: #218838;
-            color: white;
-        }
-        
         .api-status {
             padding: 10px;
             border-radius: 8px;
@@ -67,15 +31,15 @@ foreach ($configs as $config) {
         }
         
         .api-status.success {
-            background: #d4edda;
-            color: #155724;
-            border: 1px solid #c3e6cb;
+            background: rgba(212, 237, 218, 0.3);
+            color: #22c55e;
+            border: 1px solid rgba(34, 197, 94, 0.3);
         }
         
         .api-status.error {
-            background: #f8d7da;
-            color: #721c24;
-            border: 1px solid #f5c6cb;
+            background: rgba(248, 215, 218, 0.3);
+            color: #ef4444;
+            border: 1px solid rgba(239, 68, 68, 0.3);
         }
     </style>
 </head>
@@ -112,7 +76,7 @@ foreach ($configs as $config) {
     
     <div class="container">
         <!-- Selector de Proveedor de IA -->
-        <div class="config-card">
+        <div class="card">
             <h3><i class="bi bi-cpu text-primary me-2"></i>Proveedor de IA para Generación de Imágenes</h3>
             <p class="text-muted">Selecciona el proveedor de IA que deseas usar para generar las imágenes de participantes</p>
             
@@ -153,7 +117,7 @@ foreach ($configs as $config) {
         </div>
         
         <!-- API de fal.ai -->
-        <div class="config-card" id="falai-config">
+        <div class="card" id="falai-config">
             <h3><i class="bi bi-image text-primary me-2"></i>Configuración de fal.ai</h3>
             <p class="text-muted">Configura tu integración con fal.ai para generación de imágenes con Gemini 3 Pro Image Preview</p>
             
@@ -220,7 +184,7 @@ foreach ($configs as $config) {
                 
                 <div class="mb-3">
                     <label for="falai_image_size" class="form-label">
-                        <i class="bi bi-aspect-ratio"></i> Tamaño de Imagen
+                        <i class="bi bi-aspect-ratio"></i> Aspect Ratio
                     </label>
                     <select class="form-select" id="falai_image_size" name="falai_image_size">
                         <?php
@@ -232,13 +196,22 @@ foreach ($configs as $config) {
                         }
                         
                         $sizes = [
-                            '1024x1024' => '1024x1024 (Cuadrado 1:1)',
-                            '1024x1792' => '1024x1792 (Vertical 9:16 - Historias)',
-                            '1792x1024' => '1792x1024 (Horizontal 16:9)'
+                            '1:1' => '1:1 (Cuadrado)',
+                            '9:16' => '9:16 (Vertical - Historias)',
+                            '16:9' => '16:9 (Horizontal - Cine)',
+                            '3:2' => '3:2 (Foto Horizontal)',
+                            '2:3' => '2:3 (Foto Vertical)',
+                            '4:3' => '4:3 (Monitor/tablet)',
+                            '3:4' => '3:4 (Tablet vertical)',
+                            '5:4' => '5:4',
+                            '4:5' => '4:5',
+                            '21:9' => '21:9 (Ultra Panorámico)',
+                            'auto' => 'Auto (Automático)'
                         ];
                         
                         foreach ($sizes as $value => $label) {
-                            $selected = ($value === $currentSize) ? 'selected' : '';
+                            // Si la config actual es una resolución antigua (ej. 1024x1024), mostrarla seleccionada pero mapeada
+                            $selected = ($value === $currentSize || ($currentSize == '1024x1024' && $value == '1:1')) ? 'selected' : '';
                             echo "<option value='$value' $selected>$label</option>";
                         }
                         ?>
@@ -404,7 +377,7 @@ foreach ($configs as $config) {
         </div>
         
         <!-- API de OpenAI -->
-        <div class="config-card" id="openai-config">
+        <div class="card" id="openai-config">
             <h3><i class="bi bi-image text-success me-2"></i>Configuración de OpenAI GPT-Image-1</h3>
             <p class="text-muted">Configura tu integración con OpenAI para generación de imágenes con GPT-Image-1 (multimodal)</p>
             
@@ -587,7 +560,7 @@ foreach ($configs as $config) {
         </div>
         
         <!-- Información del Sistema -->
-        <div class="config-card">
+        <div class="card">
             <h3><i class="bi bi-info-circle text-info me-2"></i>Información del Sistema</h3>
             <table class="table table-sm">
                 <tr>

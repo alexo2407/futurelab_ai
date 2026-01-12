@@ -15,31 +15,26 @@ $user = currentUser();
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
     <link href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="<?php echo BASE_URL; ?>/vista/css/estilos.css">
     
     <style>
-        :root {
-            --primary-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-        }
-        
-        body {
-            background: #f5f7fa;
-        }
-        
-        .header {
-            background: var(--primary-gradient);
-            color: white;
-            padding: 20px;
-            margin-bottom: 30px;
-            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
-        }
-        
-        /* Handled by global .glass-card class */
-        
         .reference-preview {
             max-width: 300px;
             max-height: 300px;
             border-radius: 10px;
             margin-top: 10px;
+        }
+        
+        .reference-image-container {
+            position: relative;
+            display: inline-block;
+        }
+        
+        .delete-image-btn {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            z-index: 10;
         }
     </style>
 </head>
@@ -131,9 +126,14 @@ $user = currentUser();
                     
                     <?php if (!empty($carrera['reference_image_path'])): ?>
                     <div class="mb-3">
-                        <img src="<?php echo BASE_URL . '/' . $carrera['reference_image_path']; ?>" 
-                             class="reference-preview img-thumbnail" 
-                             alt="Imagen de referencia actual">
+                        <div class="reference-image-container">
+                            <img src="<?php echo BASE_URL . '/' . $carrera['reference_image_path']; ?>" 
+                                 class="reference-preview img-thumbnail" 
+                                 alt="Imagen de referencia actual">
+                            <button type="button" class="btn btn-danger btn-sm delete-image-btn" onclick="deleteReferenceImage()">
+                                <i class="bi bi-trash"></i> Eliminar
+                            </button>
+                        </div>
                         <div class="mt-2">
                             <small class="text-success"><i class="bi bi-check-circle"></i> Imagen de referencia actual</small>
                         </div>
@@ -293,6 +293,59 @@ $user = currentUser();
                 submitBtn.innerHTML = originalText;
             }
         });
+        
+        // Eliminar imagen de referencia
+        async function deleteReferenceImage() {
+            const result = await Swal.fire({
+                title: '¿Eliminar imagen?',
+                text: 'Se eliminará la imagen de referencia de esta carrera',
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#d33',
+                cancelButtonColor: '#6c757d',
+                confirmButtonText: 'Sí, eliminar',
+                cancelButtonText: 'Cancelar'
+            });
+            
+            if (!result.isConfirmed) return;
+            
+            try {
+                const response = await fetch('<?php echo BASE_URL; ?>/api/careers/delete-image', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        id: <?php echo $carrera['id']; ?>
+                    })
+                });
+                
+                const data = await response.json();
+                
+                if (data.ok) {
+                    Swal.fire({
+                        icon: 'success',
+                        title: '¡Eliminada!',
+                        text: 'Imagen eliminada exitosamente',
+                        confirmButtonColor: '#667eea',
+                        timer: 1500,
+                        showConfirmButton: false
+                    }).then(() => {
+                        location.reload();
+                    });
+                } else {
+                    throw new Error(data.error || 'Error al eliminar');
+                }
+                
+            } catch (error) {
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Error',
+                    text: error.message,
+                    confirmButtonColor: '#667eea'
+                });
+            }
+        }
     </script>
 </body>
 </html>

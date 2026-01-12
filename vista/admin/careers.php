@@ -12,49 +12,15 @@ $user = currentUser();
     
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
-    
+    <link rel="stylesheet" href="https://cdn.datatables.net/1.13.6/css/dataTables.bootstrap5.min.css">
+    <link href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css" rel="stylesheet">
     <link rel="stylesheet" href="<?php echo BASE_URL; ?>/vista/css/estilos.css">
     
     <style>
-        body {
-            color: var(--text-primary);
-        }
-        
-        .header {
-            background: rgba(0, 27, 103, 0.8);
-            backdrop-filter: blur(10px);
-            color: white;
-            padding: 20px;
-            margin-bottom: 30px;
-            border-bottom: 1px solid var(--glass-border);
-        }
-        
-        .career-card {
-            margin-bottom: 15px;
-        }
-        
-        /* Handled by global .card-elevated class */
-        
-        .career-card-body {
-            padding: 20px;
-        }
-        
-        .has-prompt {
-            border-left: 4px solid #28a745;
-        }
-        
-        .has-image {
-            border-left: 4px solid #007bff;
-        }
-        
-        .has-both {
-            border-left: 4px solid #6f42c1;
-        }
-        
         .reference-thumb {
-            max-width: 80px;
-            max-height: 80px;
-            border-radius: 8px;
+            max-width: 60px;
+            max-height: 60px;
+            border-radius: 6px;
         }
     </style>
 </head>
@@ -80,7 +46,7 @@ $user = currentUser();
                     <a href="<?php echo BASE_URL; ?>/admin/config" class="btn btn-outline-light me-2">
                         <i class="bi bi-gear"></i> Config
                     </a>
-                    <span class="text-white-50 me-2">
+                    <span class="text-white me-2">
                         <i class="bi bi-person-circle"></i> <?php echo htmlspecialchars($user['username']); ?>
                     </span>
                     <a href="<?php echo BASE_URL; ?>/auth/logout" class="btn btn-outline-light">
@@ -91,95 +57,230 @@ $user = currentUser();
         </div>
     </div>
     
-    <div class="container">
-        <div class="row mb-3">
-            <div class="col">
-                <div class="alert alert-info bg-transparent border-info text-info">
+    <div class="container" style="max-width: 1400px;">
+        <div class="card mb-4">
+            <div class="card-body">
+                <div class="alert alert-info">
                     <i class="bi bi-info-circle me-2"></i>
                     <strong>Personalización por carrera:</strong> Define un prompt único y/o imagen de referencia para cada carrera. 
                     El worker usará esta información al generar imágenes con Gemini AI.
                 </div>
+                
+                <div class="mb-3">
+                    <button class="btn btn-success" onclick="showCreateModal()">
+                        <i class="bi bi-plus-circle"></i> Nueva Carrera
+                    </button>
+                </div>
+                
+                <table id="careers-table" class="table table-hover" style="width:100%">
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Carrera</th>
+                            <th>Categoría</th>
+                            <th>Prompt</th>
+                            <th>Imagen</th>
+                            <th>Estado</th>
+                            <th>Acciones</th>
+                        </tr>
+                    </thead>
+                </table>
             </div>
         </div>
-        
-        <?php foreach ($carreras as $carrera): 
-            $hasPrompt = !empty($carrera['ai_prompt']);
-            $hasImage = !empty($carrera['reference_image_path']) || !empty($carrera['reference_image_url']);
-            $cardClass = 'career-card';
-            
-            if ($hasPrompt && $hasImage) {
-                $cardClass .= ' has-both';
-            } elseif ($hasPrompt) {
-                $cardClass .= ' has-prompt';
-            } elseif ($hasImage) {
-                $cardClass .= ' has-image';
-            }
-        ?>
-            <div class="<?php echo $cardClass; ?> card fade-in">
-                <div class="career-card-body">
-                    <div class="row align-items-center">
-                        <div class="col-md-6">
-                            <h5 class="mb-1">
-                                <?php echo htmlspecialchars($carrera['name']); ?>
-                                <?php if (!$carrera['is_active']): ?>
-                                    <span class="badge bg-secondary">Inactiva</span>
-                                <?php endif; ?>
-                            </h5>
-                            <small class="text-white-50">
-                                <?php echo htmlspecialchars($carrera['category'] ?? 'Sin categoría'); ?>
-                            </small>
-                            
-                            <?php if ($hasPrompt): ?>
-                                <div class="mt-2">
-                                    <span class="badge bg-success">
-                                        <i class="bi bi-chat-text"></i> Tiene prompt personalizado
-                                    </span>
-                                </div>
-                            <?php endif; ?>
-                            
-                            <?php if ($hasImage): ?>
-                                <div class="mt-1">
-                                    <span class="badge bg-primary">
-                                        <i class="bi bi-image"></i> Tiene imagen de referencia
-                                    </span>
-                                </div>
-                            <?php endif; ?>
-                        </div>
-                        
-                        <div class="col-md-3 text-center">
-                            <?php if (!empty($carrera['reference_image_path'])): ?>
-                                <img src="<?php echo STORAGE_URL . str_replace('/storage', '', $carrera['reference_image_path']); ?>" 
-                                     class="reference-thumb" 
-                                     alt="Referencia">
-                            <?php elseif (!empty($carrera['reference_image_url'])): ?>
-                                <img src="<?php echo htmlspecialchars($carrera['reference_image_url']); ?>" 
-                                     class="reference-thumb" 
-                                     alt="Referencia">
-                            <?php else: ?>
-                                <div class="text-muted">
-                                    <i class="bi bi-image" style="font-size: 3rem; opacity: 0.3;"></i>
-                                </div>
-                            <?php endif; ?>
-                        </div>
-                        
-                        <div class="col-md-3 text-end">
-                            <a href="<?php echo BASE_URL; ?>/admin/careers/edit?id=<?php echo $carrera['id']; ?>" 
-                               class="btn btn-primary">
-                                <i class="bi bi-pencil"></i> Configurar
-                            </a>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        <?php endforeach; ?>
     </div>
     
-    <footer class="text-center py-4 mt-5 text-white-50">
-        <div class="container">
-            <p class="mb-0">Desarrollado por Alberto Calero</p>
-        </div>
-    </footer>
-
+    <script src="https://code.jquery.com/jquery-3.7.0.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
+    <script src="https://cdn.datatables.net/1.13.6/js/dataTables.bootstrap5.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    
+    <script>
+        $(document).ready(function() {
+            $('#careers-table').DataTable({
+                ajax: {
+                    url: '<?php echo BASE_URL; ?>/api/careers/datatables',
+                    type: 'GET'
+                },
+                columns: [
+                    { data: 'id', width: '50px' },
+                    { 
+                        data: 'name',
+                        render: function(data, type, row) {
+                            return '<strong>' + data + '</strong>';
+                        }
+                    },
+                    { data: 'category' },
+                    { 
+                        data: 'ai_prompt',
+                        render: function(data, type, row) {
+                            if (data) {
+                                return '<span class="badge bg-success"><i class="bi bi-check-circle"></i> Sí</span>';
+                            }
+                            return '<span class="badge bg-secondary">No</span>';
+                        },
+                        width: '80px'
+                    },
+                    { 
+                        data: 'reference_image_path',
+                        render: function(data, type, row) {
+                            if (data) {
+                                return '<img src="<?php echo BASE_URL; ?>/' + data + '" class="reference-thumb">';
+                            } else if (row.reference_image_url) {
+                                return '<span class="badge bg-primary"><i class="bi bi-link"></i> URL</span>';
+                            }
+                            return '<span class="badge bg-secondary">No</span>';
+                        },
+                        orderable: false,
+                        width: '100px'
+                    },
+                    { 
+                        data: 'is_active',
+                        render: function(data, type, row) {
+                            if (data == 1) {
+                                return '<span class="badge bg-success">Activa</span>';
+                            }
+                            return '<span class="badge bg-secondary">Inactiva</span>';
+                        },
+                        width: '100px'
+                    },
+                    { 
+                        data: null,
+                        render: function(data, type, row) {
+                            return `
+                                <a href="<?php echo BASE_URL; ?>/admin/careers/edit?id=${row.id}" 
+                                   class="btn btn-sm btn-primary me-1">
+                                    <i class="bi bi-pencil"></i>
+                                </a>
+                                <button onclick="deleteCareer(${row.id}, '${row.name}')" 
+                                        class="btn btn-sm btn-danger">
+                                    <i class="bi bi-trash"></i>
+                                </button>
+                            `;
+                        },
+                        orderable: false,
+                        width: '140px'
+                    }
+                ],
+                order: [[0, 'asc']],
+                pageLength: 25,
+                language: {
+                    url: '//cdn.datatables.net/plug-ins/1.13.6/i18n/es-ES.json'
+                },
+                responsive: true
+            });
+        });
+        
+        // Mostrar modal de crear carrera
+        function showCreateModal() {
+            Swal.fire({
+                title: 'Nueva Carrera',
+                html: `
+                    <input id="career-name" class="swal2-input" placeholder="Nombre de la carrera">
+                    <input id="career-category" class="swal2-input" placeholder="Categoría">
+                `,
+                showCancelButton: true,
+                confirmButtonText: 'Crear',
+                cancelButtonText: 'Cancelar',
+                confirmButtonColor: '#198754',
+                preConfirm: () => {
+                    const name = document.getElementById('career-name').value;
+                    const category = document.getElementById('career-category').value;
+                    
+                    if (!name) {
+                        Swal.showValidationMessage('El nombre es requerido');
+                        return false;
+                    }
+                    
+                    return { name, category };
+                }
+            }).then(async (result) => {
+                if (result.isConfirmed) {
+                    await createCareer(result.value);
+                }
+            });
+        }
+        
+        // Crear carrera
+        async function createCareer(data) {
+            try {
+                const response = await fetch('<?php echo BASE_URL; ?>/api/careers/create', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(data)
+                });
+                
+                const result = await response.json();
+                
+                if (result.ok) {
+                    Swal.fire({
+                        icon: 'success',
+                        title: '¡Creada!',
+                        text: 'Carrera creada exitosamente',
+                        timer: 1500,
+                        showConfirmButton: false
+                    });
+                    $('#careers-table').DataTable().ajax.reload();
+                } else {
+                    throw new Error(result.error || 'Error al crear');
+                }
+            } catch (error) {
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Error',
+                    text: error.message
+                });
+            }
+        }
+        
+        // Eliminar carrera
+        async function deleteCareer(id, name) {
+            const result = await Swal.fire({
+                title: '¿Eliminar carrera?',
+                text: `Se eliminará "${name}" permanentemente`,
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#d33',
+                cancelButtonColor: '#6c757d',
+                confirmButtonText: 'Sí, eliminar',
+                cancelButtonText: 'Cancelar'
+            });
+            
+            if (!result.isConfirmed) return;
+            
+            try {
+                const response = await fetch('<?php echo BASE_URL; ?>/api/careers/delete', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ id })
+                });
+                
+                const data = await response.json();
+                
+                if (data.ok) {
+                    Swal.fire({
+                        icon: 'success',
+                        title: '¡Eliminada!',
+                        text: 'Carrera eliminada exitosamente',
+                        timer: 1500,
+                        showConfirmButton: false
+                    });
+                    $('#careers-table').DataTable().ajax.reload();
+                } else {
+                    throw new Error(data.error || 'Error al eliminar');
+                }
+            } catch (error) {
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Error',
+                    text: error.message
+                });
+            }
+        }
+    </script>
 </body>
 </html>

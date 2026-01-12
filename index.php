@@ -191,6 +191,24 @@ try {
         exit;
     }
     
+    if ($requestUri === '/api/careers/datatables') {
+        $controller = new CarreraControlador();
+        $controller->datatables();
+        exit;
+    }
+    
+    if ($requestUri === '/api/careers/create' && $requestMethod === 'POST') {
+        $controller = new CarreraControlador();
+        $controller->crear();
+        exit;
+    }
+    
+    if ($requestUri === '/api/careers/delete' && $requestMethod === 'POST') {
+        $controller = new CarreraControlador();
+        $controller->eliminar();
+        exit;
+    }
+    
     // ===== RUTA PÚBLICA DE PARTICIPANTE (por código) =====
     
     if (preg_match('#^/p/([A-Z0-9]{12})$#', $requestUri, $matches)) {

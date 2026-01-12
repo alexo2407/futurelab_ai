@@ -115,4 +115,56 @@ class CarreraModel {
             return false;
         }
     }
+    
+    /**
+     * Crea una nueva carrera
+     * @param array $datos
+     * @return int|false ID de la carrera creada o false si falla
+     */
+    public function crear($datos) {
+        try {
+            $db = $this->conexion->conectar();
+            
+            $stmt = $db->prepare("
+                INSERT INTO careers (name, category, is_active, sort_order)
+                VALUES (:name, :category, :is_active, :sort_order)
+            ");
+            
+            $resultado = $stmt->execute([
+                'name' => $datos['name'],
+                'category' => $datos['category'] ?? null,
+                'is_active' => $datos['is_active'] ?? 1,
+                'sort_order' => $datos['sort_order'] ?? 999
+            ]);
+            
+            if ($resultado) {
+                return $db->lastInsertId();
+            }
+            
+            return false;
+            
+        } catch (PDOException $e) {
+            error_log('Error creando carrera: ' . $e->getMessage());
+            return false;
+        }
+    }
+    
+    /**
+     * Elimina una carrera
+     * @param int $id
+     * @return bool
+     */
+    public function eliminar($id) {
+        try {
+            $db = $this->conexion->conectar();
+            
+            $stmt = $db->prepare("DELETE FROM careers WHERE id = :id");
+            
+            return $stmt->execute(['id' => $id]);
+            
+        } catch (PDOException $e) {
+            error_log('Error eliminando carrera: ' . $e->getMessage());
+            return false;
+        }
+    }
 }
