@@ -98,6 +98,9 @@ $user = currentUser();
                 <a href="<?php echo BASE_URL; ?>/admin/participants" class="text-white">
                     <i class="bi bi-list-ul"></i> Participantes
                 </a> |
+                <a href="<?php echo BASE_URL; ?>/admin/config" class="text-white">
+                    <i class="bi bi-gear"></i> Config
+                </a> |
                 <a href="<?php echo BASE_URL; ?>/admin/careers" class="text-white">
                     <i class="bi bi-mortarboard"></i> Carreras
                 </a> |
