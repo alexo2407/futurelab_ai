@@ -6,14 +6,14 @@
     # Deshabilitar listado de directorios
     Options -Indexes
     
-    # Redirigir todo a index.php excepto archivos existentes
+    # Redirigir todo a index.php excepto archivos existentes (imágenes, css, js)
     RewriteCond %{REQUEST_FILENAME} !-f
-    RewriteCond %{REQUEST_FILENAME} !-d
+    # Nota: Quitamos la condición !-d para que el acceso a carpetas también vaya al index.php (404)
     RewriteRule ^(.*)$ index.php [QSA,L]
 </IfModule>
 
 # Proteger archivos sensibles
-<FilesMatch "^(config\.php|\.env)$">
+<FilesMatch "^(config\.php|\.env|composer\.json|composer\.lock)$">
     Order allow,deny
     Deny from all
 </FilesMatch>
