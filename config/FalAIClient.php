@@ -151,7 +151,7 @@ class FalAIClient {
         }
         
         // DEBUG: Imprimir payload para verificar aspect_ratio
-        error_log("DEBUG FalAI Payload: " . json_encode($payload));
+        // error_log("DEBUG FalAI Payload: " . json_encode($payload)); // Disabled to avoid console flood
         
         $ch = curl_init($endpoint);
         curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
