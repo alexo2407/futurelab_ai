@@ -397,7 +397,8 @@ public function crearConCodigo($datos) {
                 $sql .= " AND p.id > :since_id";
             }
             
-            $sql .= " ORDER BY p.created_at DESC LIMIT :limit";
+            // Ordenar por updated_at DESC para ver las que se acaban de generar primero
+            $sql .= " ORDER BY p.updated_at DESC LIMIT :limit";
             
             $stmt = $db->prepare($sql);
             

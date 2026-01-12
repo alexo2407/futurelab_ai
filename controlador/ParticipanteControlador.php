@@ -377,4 +377,47 @@ class ParticipanteControlador {
         // Incluir la vista pública
         include __DIR__ . '/../vista/public/participant.php';
     }
+    
+    /**
+     * API Pública: Obtiene los últimos participantes completados (para el muro)
+     */
+    public function obtenerUltimos() {
+        header('Content-Type: application/json');
+        header("Access-Control-Allow-Origin: *");
+        
+        try {
+            $sinceId = isset($_GET['since_id']) ? (int)$_GET['since_id'] : null;
+            $limit = isset($_GET['limit']) ? (int)$_GET['limit'] : 20;
+            
+            if ($limit > 50) $limit = 50;
+            
+            $items = $this->participanteModel->obtenerUltimosCompletados($limit, $sinceId);
+            
+            $lastId = 0;
+            if (!empty($items)) {
+                $lastId = max(array_column($items, 'id'));
+            } else if ($sinceId) {
+                $lastId = $sinceId;
+            }
+            
+            foreach ($items as &$item) {
+                if (!empty($item['result_image_path'])) {
+                    $item['result_image_url'] = BASE_URL . $item['result_image_path'];
+                }
+            }
+            
+            echo json_encode([
+                'ok' => true,
+                'items' => $items,
+                'last_id' => $lastId
+            ]);
+            
+        } catch (Exception $e) {
+            http_response_code(500);
+            echo json_encode([
+                'ok' => false,
+                'error' => $e->getMessage()
+            ]);
+        }
+    }
 }

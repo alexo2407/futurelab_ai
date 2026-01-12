@@ -208,6 +208,12 @@ try {
         $controller->eliminar();
         exit;
     }
+
+    if ($requestUri === '/api/public/latest') {
+        $controller = new ParticipanteControlador();
+        $controller->obtenerUltimos();
+        exit;
+    }
     
     // ===== RUTA PÚBLICA DE PARTICIPANTE (por código) =====
     

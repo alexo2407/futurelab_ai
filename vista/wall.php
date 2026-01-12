@@ -131,30 +131,87 @@
         let participants = [];
         let currentIndex = 0;
         let lastId = 0;
-        const CAROUSEL_INTERVAL = 5000; // 5 segundos
-        const POLLING_INTERVAL = 5000; // 5 segundos
+        let rotationTimer = null;
+        let isShowingNew = false;
+        
+        const CAROUSEL_INTERVAL = 6000; // 6 segundos por imagen en rotación normal
+        const NEW_IMAGE_DISPLAY_TIME = 15000; // 15 segundos para mostrar una imagen NUEVA
+        const POLLING_INTERVAL = 4000; // 4 segundos polling
         
         // Cargar participantes
         async function loadParticipants() {
             try {
-                const response = await fetch('<?php echo BASE_URL; ?>/api/public/latest?since_id=' + lastId);
+                // Primera carga o búsqueda de nuevos (since_id)
+                const url = `<?php echo BASE_URL; ?>/api/public/latest?since_id=${lastId}&limit=${lastId === 0 ? 20 : 5}`;
+                const response = await fetch(url);
                 const data = await response.json();
                 
                 if (data.ok && data.items.length > 0) {
-                    // Agregar nuevos participantes al principio
-                    participants = [...data.items.reverse(), ...participants];
-                    lastId = data.last_id;
+                    const newItems = data.items.reverse(); // Backend devuelve DESC, queremos oldest->newest para agregar
                     
-                    updateCounter();
-                    renderCarousel();
+                    // Detectar si son realmente nuevos (cuando ya tenemos datos)
+                    if (lastId > 0 && newItems.length > 0) {
+                        console.log("¡Nueva imagen detectada!", newItems[0].name);
+                        
+                        // Agregar al principio (las más nuevas primero en el array)
+                        // NOTA: Invertimos de nuevo porque queremos que el índice 0 sea el más reciente
+                        participants = [...newItems.reverse(), ...participants];
+                        
+                        // Limitar el array en memoria para no saturar
+                        if (participants.length > 50) participants = participants.slice(0, 50);
+                        
+                        lastId = data.last_id;
+                        updateCounter();
+                        
+                        // Re-renderizar carrusel (agregando los nuevos elementos al DOM)
+                        renderCarousel(true); // true = forceRefresh
+                        
+                        // MOSTRAR LA NUEVA INMEDIATAMENTE
+                        showNewImage();
+                    } else {
+                        // Carga inicial
+                        participants = data.items; // Ya vienen ordenados por fecha DESC
+                        lastId = data.last_id;
+                        updateCounter();
+                        renderCarousel();
+                        startRotation();
+                    }
                 }
             } catch (err) {
                 console.error('Error loading participants:', err);
             }
         }
         
+        function showNewImage() {
+            // Detener rotación actual
+            if (rotationTimer) clearInterval(rotationTimer);
+            isShowingNew = true;
+            
+            // Ir al índice 0 (la más nueva)
+            currentIndex = 0;
+            showSlide(currentIndex);
+            
+            // Reiniciar rotación después de un tiempo prolongado
+            console.log(`Mostrando nueva imagen por ${NEW_IMAGE_DISPLAY_TIME/1000}s...`);
+            setTimeout(() => {
+                isShowingNew = false;
+                startRotation();
+            }, NEW_IMAGE_DISPLAY_TIME);
+        }
+        
+        function startRotation() {
+            if (rotationTimer) clearInterval(rotationTimer);
+            
+            // Iniciar rotación
+            rotationTimer = setInterval(() => {
+                if (!isShowingNew && participants.length > 1) {
+                    nextSlide();
+                }
+            }, CAROUSEL_INTERVAL);
+        }
+        
         // Renderizar carrusel
-        function renderCarousel() {
+        function renderCarousel(preserveActive = false) {
             const container = document.getElementById('carousel-container');
             
             if (participants.length === 0) {
@@ -164,21 +221,31 @@
             
             document.getElementById('no-participants').style.display = 'none';
             
-            // Limpiar contenedor
+            // Si preservamos, solo agregamos los nuevos si es necesario, 
+            // pero por simplicidad vamos a reconstruir y restaurar clase active
             container.innerHTML = '';
             
             // Crear items
             participants.forEach((participant, index) => {
                 const item = document.createElement('div');
                 item.className = 'carousel-item-custom';
+                item.id = `slide-${index}`;
+                
+                // Mostrar si es el actual
                 if (index === currentIndex) {
                     item.classList.add('active');
                 }
                 
+                // Precargar solo las primeras 3 imágenes para ahorrar ancho de banda
+                const imgSrc = (index < 3 || Math.abs(index - currentIndex) < 2) 
+                    ? participant.result_image_url 
+                    : ''; // Lazy load manual
+                
                 item.innerHTML = `
                     <img src="${participant.result_image_url}" 
                          alt="${participant.name}" 
-                         class="participant-image">
+                         class="participant-image"
+                         loading="${index < 2 ? 'eager' : 'lazy'}">
                     <div class="participant-info card text-center p-4">
                         <h2>${participant.name}</h2>
                         <p><i class="bi bi-mortarboard-fill"></i> ${participant.career}</p>
@@ -189,16 +256,27 @@
             });
         }
         
+        function showSlide(index) {
+            const items = document.querySelectorAll('.carousel-item-custom');
+            if (items.length === 0) return;
+            
+            // Quitar active de todos
+            items.forEach(item => item.classList.remove('active'));
+            
+            // Asegurar índice válido
+            if (index >= items.length) index = 0;
+            currentIndex = index;
+            
+            // Activar nuevo
+            if (items[currentIndex]) {
+                items[currentIndex].classList.add('active');
+            }
+        }
+        
         // Siguiente slide
         function nextSlide() {
             if (participants.length === 0) return;
-            
-            const items = document.querySelectorAll('.carousel-item-custom');
-            items[currentIndex].classList.remove('active');
-            
-            currentIndex = (currentIndex + 1) % participants.length;
-            
-            items[currentIndex].classList.add('active');
+            showSlide(currentIndex + 1);
         }
         
         // Actualizar contador
@@ -207,17 +285,15 @@
         }
         
         // Iniciar
-        async function init() {
-            await loadParticipants();
+        function init() {
+            loadParticipants();
             
-            // Auto-avance del carrusel
-            setInterval(nextSlide, CAROUSEL_INTERVAL);
-            
-            // Auto-refresh de datos
+            // Polling para nuevas imágenes
             setInterval(loadParticipants, POLLING_INTERVAL);
         }
         
-        init();
+        // Iniciar cuando el DOM esté listo
+        document.addEventListener('DOMContentLoaded', init);
     </script>
 </body>
 </html>
