@@ -3,6 +3,9 @@
     RewriteEngine On
     RewriteBase /futurelab_ai/
     
+    # Deshabilitar listado de directorios
+    Options -Indexes
+    
     # Redirigir todo a index.php excepto archivos existentes
     RewriteCond %{REQUEST_FILENAME} !-f
     RewriteCond %{REQUEST_FILENAME} !-d
