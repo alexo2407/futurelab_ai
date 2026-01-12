@@ -47,6 +47,11 @@ class ConfigControlador {
             if (isset($_POST['ai_provider'])) {
                 $this->configModel->set('ai_provider', $_POST['ai_provider'], $userId);
                 $updated++;
+
+                // Fallback mode (checkbox en el mismo form)
+                $fallback = isset($_POST['ai_fallback_mode']) ? '1' : '0';
+                $this->configModel->set('ai_fallback_mode', $fallback, $userId);
+                $updated++;
             }
             
             // Campos de OpenAI

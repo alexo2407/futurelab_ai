@@ -81,6 +81,31 @@ foreach ($configs as $config) {
             <p class="text-muted">Selecciona el proveedor de IA que deseas usar para generar las imágenes de participantes</p>
             
             <form id="form-ai-provider">
+                <!-- Fallback Mode Toggle -->
+                <div class="mb-4 p-3 bg-danger bg-opacity-10 border border-danger rounded">
+                    <div class="form-check form-switch">
+                        <input 
+                            class="form-check-input" 
+                            type="checkbox" 
+                            id="ai_fallback_mode" 
+                            name="ai_fallback_mode"
+                            <?php
+                            foreach ($configs as $c) {
+                                if ($c['config_key'] === 'ai_fallback_mode' && $c['config_value'] === '1') {
+                                    echo 'checked';
+                                }
+                            }
+                            ?>>
+                        <label class="form-check-label fw-bold text-danger" for="ai_fallback_mode">
+                            <i class="bi bi-exclamation-triangle-fill me-2"></i>MODO CONTINGENCIA (SIN IA)
+                        </label>
+                    </div>
+                    <div class="form-text text-danger">
+                        <strong>Actívalo si te quedas sin créditos o la API falla.</strong><br>
+                        Cuando está activo, el sistema omite la generación con IA y devuelve la foto original del participante inmediatamente.
+                    </div>
+                </div>
+
                 <div class="mb-3">
                     <label for="ai_provider" class="form-label">
                         <i class="bi bi-gear"></i> Proveedor Activo

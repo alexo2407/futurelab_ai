@@ -264,6 +264,36 @@ while ($continuar) {
                 }
             }
             
+            // === MODO CONTINGENCIA (SIN IA) ===
+            // Verificar configuración en tiempo real por si se activó durante la ejecución
+            $fallbackMode = ($configModel->get('ai_fallback_mode') === '1');
+            
+            if ($fallbackMode) {
+                echo "[$id] ⚠ MODO CONTINGENCIA ACTIVO: Omitiendo IA y usando foto original.\n";
+                
+                // Copiar original a resultados para mantener consistencia
+                $ext = pathinfo($participante['photo_original_path'], PATHINFO_EXTENSION);
+                if (empty($ext)) $ext = 'jpg'; // Fallback ext
+                
+                $filename = 'fallback_' . $id . '_' . time() . '.' . $ext;
+                $resultPath = RESULTS_PATH . '/' . $filename;
+                
+                if (copy($photoPath, $resultPath)) {
+                    $resultadoPath = '/storage/results/' . $filename;
+                    echo "[$id] ✓ Imagen original copiada a: $resultadoPath\n";
+                    
+                    // Marcar como completado
+                    $participanteModel->marcarComoCompletado($id, $resultadoPath);
+                    echo "[$id] ✓ Participante completado (Modo Contingencia)\n";
+                } else {
+                    throw new Exception("Error al copiar imagen en Modo Contingencia");
+                }
+                
+                // Saltar al siguiente participante
+                continue;
+            }
+            // ==================================
+            
             // Construir prompt personalizado
             $prompt = '';
             
