@@ -265,8 +265,11 @@ while ($continuar) {
             }
             
             // === MODO CONTINGENCIA (SIN IA) ===
-            // Verificar configuración en tiempo real por si se activó durante la ejecución
-            $fallbackMode = ($configModel->get('ai_fallback_mode') === '1');
+            // Verificar configuración en tiempo real
+            $valFallback = $configModel->get('ai_fallback_mode');
+            echo "[$id] DEBUG: ai_fallback_mode = " . var_export($valFallback, true) . "\n";
+            
+            $fallbackMode = ($valFallback == '1');
             
             if ($fallbackMode) {
                 echo "[$id] ⚠ MODO CONTINGENCIA ACTIVO: Omitiendo IA y usando foto original.\n";
