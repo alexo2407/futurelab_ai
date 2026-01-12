@@ -331,15 +331,25 @@ while ($continuar) {
             
         } catch (Exception $e) {
             $errorMsg = $e->getMessage();
-            $isQuotaError = (
+            
+            // Detectar ERRORES DE CRÉDITO O DE AUTENTICACIÓN
+            $shouldFallback = (
+                // Cuota / Pago
                 stripos($errorMsg, 'insufficient_quota') !== false || 
                 stripos($errorMsg, 'payment_required') !== false ||
                 stripos($errorMsg, 'balance') !== false ||
-                strpos($errorMsg, '402') !== false
+                strpos($errorMsg, '402') !== false ||
+                
+                // Credenciales / Auth
+                strpos($errorMsg, '401') !== false ||
+                stripos($errorMsg, 'unauthorized') !== false ||
+                stripos($errorMsg, 'invalid_api_key') !== false ||
+                stripos($errorMsg, 'incorrect_api_key') !== false ||
+                stripos($errorMsg, 'empty_api_key') !== false
             );
 
-            if ($isQuotaError) {
-                echo "[$id] ⚠ FALLO API DETECTADO (Cuota/Pago): $errorMsg\n";
+            if ($shouldFallback) {
+                echo "[$id] ⚠ FALLO API DETECTADO (Cuota/Auth): $errorMsg\n";
                 echo "[$id] ⚡ ACTIVANDO SALVAVIDAS AUTOMÁTICO (Generando cover local)...\n";
 
                 // === LOGICA DE FALLBACK (COPIA LOCAL) ===
