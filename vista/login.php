@@ -13,6 +13,10 @@
     
     <style>
         body {
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            padding: 20px;
             /* Global CSS handles background */
         }
         
@@ -118,7 +122,7 @@
 </head>
 <body>
     <div class="bg-animation"></div>
-    <div class="login-container card fade-in" style="max-width: 450px; margin: 0 auto;">
+    <div class="login-container card fade-in" style="width: 100%; max-width: 450px; margin: auto;">
         <div class="login-header">
             <div class="logo-icon text-accent">
                 <i class="bi bi-robot"></i>
