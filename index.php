@@ -208,13 +208,6 @@ try {
         $controller->eliminar();
         exit;
     }
-
-    if ($requestUri === '/api/public/latest') {
-        $controller = new ParticipanteControlador();
-        $controller->obtenerUltimos();
-        exit;
-    }
-    
     // ===== RUTA PÚBLICA DE PARTICIPANTE (por código) =====
     
     if (preg_match('#^/p/([A-Z0-9]{12})$#', $requestUri, $matches)) {

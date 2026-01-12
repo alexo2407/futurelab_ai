@@ -141,41 +141,47 @@
         // Cargar participantes
         async function loadParticipants() {
             try {
-                // Primera carga o búsqueda de nuevos (since_id)
-                const url = `<?php echo BASE_URL; ?>/api/public/latest?since_id=${lastId}&limit=${lastId === 0 ? 20 : 5}`;
+                // Siempre pedir los últimos 20 (ordenados por fecha desc)
+                // No usamos since_id para evitar problemas con actualizaciones de registros viejos
+                const url = '<?php echo BASE_URL; ?>/api/public/latest?limit=20';
                 const response = await fetch(url);
                 const data = await response.json();
                 
                 if (data.ok && data.items.length > 0) {
-                    const newItems = data.items.reverse(); // Backend devuelve DESC, queremos oldest->newest para agregar
+                    const latestItems = data.items; // Vienen ordenados DESC (más nuevo primero)
                     
-                    // Detectar si son realmente nuevos (cuando ya tenemos datos)
-                    if (lastId > 0 && newItems.length > 0) {
-                        console.log("¡Nueva imagen detectada!", newItems[0].name);
-                        
-                        // Agregar al principio (las más nuevas primero en el array)
-                        // NOTA: Invertimos de nuevo porque queremos que el índice 0 sea el más reciente
-                        participants = [...newItems.reverse(), ...participants];
-                        
-                        // Limitar el array en memoria para no saturar
-                        if (participants.length > 50) participants = participants.slice(0, 50);
-                        
-                        lastId = data.last_id;
-                        updateCounter();
-                        
-                        // Re-renderizar carrusel (agregando los nuevos elementos al DOM)
-                        renderCarousel(true); // true = forceRefresh
-                        
-                        // MOSTRAR LA NUEVA INMEDIATAMENTE
-                        showNewImage();
-                    } else {
+                    if (participants.length === 0) {
                         // Carga inicial
-                        participants = data.items; // Ya vienen ordenados por fecha DESC
-                        lastId = data.last_id;
+                        participants = latestItems;
                         updateCounter();
                         renderCarousel();
                         startRotation();
+                        return;
                     }
+                    
+                    // Verificar si el más reciente es diferente al que tenemos
+                    const currentNewestId = participants[0].id;
+                    const incomingNewestId = latestItems[0].id;
+                    
+                    // También verificamos si la fecha de actualización cambió (útil si se regenera el mismo ID)
+                    // Pero para simplicidad, comparamos URL de la imagen
+                    const currentImgUrl = participants[0].result_image_url;
+                    const incomingImgUrl = latestItems[0].result_image_url;
+                    
+                    if (incomingNewestId !== currentNewestId || incomingImgUrl !== currentImgUrl) {
+                        console.log("¡Nueva imagen detectada!", latestItems[0].name);
+                        
+                        // Actualizar lista completa
+                        participants = latestItems;
+                        updateCounter();
+                        
+                        // Forzar render para actualizar DOM
+                        renderCarousel(true);
+                        
+                        // MOSTRAR LA NUEVA INMEDIATAMENTE
+                        showNewImage();
+                    }
+                    // Si no hay cambios en la más reciente, no hacemos nada (seguimos rotando las viejas)
                 }
             } catch (err) {
                 console.error('Error loading participants:', err);
