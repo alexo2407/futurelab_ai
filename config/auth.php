@@ -99,7 +99,8 @@ function requireRole($roles, $redirectToLogin = false) {
             exit;
         } else {
             http_response_code(403);
-            die('Acceso denegado. No tienes permisos para acceder a este recurso.');
+            require __DIR__ . '/../vista/error_403.php';
+            exit;
         }
     }
 }
