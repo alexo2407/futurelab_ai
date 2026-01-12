@@ -298,7 +298,7 @@ while ($continuar) {
                 $filename = 'fallback_' . $id . '_' . time() . '.jpg';
                 $resultPath = RESULTS_PATH . '/' . $filename;
                 
-                // === PROCESAMIENTO DE IMAGEN CON GD ===
+                // === PROCESAMIENTO DE IMAGEN CON GD (SIMPLE COVER) ===
                 try {
                     // 1. Cargar original
                     $srcImg = @imagecreatefromstring(file_get_contents($photoPath));
@@ -307,79 +307,52 @@ while ($continuar) {
                     $origW = imagesx($srcImg);
                     $origH = imagesy($srcImg);
                     
-                    // 2. Crear canvas destino negro
+                    // 2. Crear canvas destino (1080x1920)
                     $destImg = imagecreatetruecolor($targetW, $targetH);
-                    $black = imagecolorallocate($destImg, 10, 14, 31); // Dark Navy Background
-                    imagefill($destImg, 0, 0, $black);
                     
-                    // 3. Crear fondo borroso (Efecto Instagram)
-                    // Escalar original para llenar el fondo (cover)
+                    // 3. Calcular dimensiones para COVER (Llenar todo el espacio)
                     $ratioDest = $targetW / $targetH;
                     $ratioOrig = $origW / $origH;
                     
-                    $bgW = $targetW;
-                    $bgH = $targetH;
-                    $bgX = 0;
-                    $bgY = 0;
-                    
-                    if ($ratioOrig > $ratioDest) {
-                        // Original mas ancho, ajustar a altura
-                        $bgH = $targetH;
-                        $bgW = $targetH * $ratioOrig;
-                        $bgX = ($targetW - $bgW) / 2;
-                    } else {
-                        // Original mas alto, ajustar a ancho
-                        $bgW = $targetW;
-                        $bgH = $targetW / $ratioOrig;
-                        $bgY = ($targetH - $bgH) / 2;
-                    }
-                    
-                    // Copiar y redimensionar fondo
-                    imagecopyresampled($destImg, $srcImg, (int)$bgX, (int)$bgY, 0, 0, (int)$bgW, (int)$bgH, $origW, $origH);
-                    
-                    // Aplicar blur fuerte al fondo
-                    for ($i = 0; $i < 30; $i++) {
-                        imagefilter($destImg, IMG_FILTER_GAUSSIAN_BLUR);
-                    }
-                    // Oscurecer fondo
-                    imagefilter($destImg, IMG_FILTER_BRIGHTNESS, -40);
+                    $srcX = 0;
+                    $srcY = 0;
+                    $srcW = $origW;
+                    $srcH = $origH;
 
-                    // 4. Colocar imagen principal centrada (Contain)
-                    // Calcular dimensiones para "fit" dentro del canvas con margenes
-                    $margin = 80; // Margen en pixeles
-                    $availW = $targetW - ($margin * 2);
-                    $availH = $targetH - ($margin * 2);
-                    
-                    $fgW = $availW;
-                    $fgH = $availW / $ratioOrig;
-                    
-                    if ($fgH > $availH) {
-                        $fgH = $availH;
-                        $fgW = $availH * $ratioOrig;
+                    // Si la imagen original es más ancha que el destino (relativamente)
+                    // Recortamos los lados (centrado)
+                    if ($ratioOrig > $ratioDest) {
+                        $srcW = $origH * $ratioDest;
+                        $srcX = ($origW - $srcW) / 2;
+                    } 
+                    // Si la imagen original es más alta que el destino
+                    // Recortamos arriba/abajo (centrado)
+                    else {
+                        $srcH = $origW / $ratioDest;
+                        $srcY = ($origH - $srcH) / 2;
                     }
+
+                    // Copiar y redimensionar (Recorte limpio, sin efectos)
+                    imagecopyresampled(
+                        $destImg, $srcImg, 
+                        0, 0, 
+                        (int)$srcX, (int)$srcY, 
+                        $targetW, $targetH, 
+                        (int)$srcW, (int)$srcH
+                    );
                     
-                    $fgX = ($targetW - $fgW) / 2;
-                    $fgY = ($targetH - $fgH) / 2;
-                    
-                    // Sombra para la imagen principal (simulada con rectangulo negro semi-transparente atras)
-                    $shadowColor = imagecolorallocatealpha($destImg, 0, 0, 0, 60);
-                    imagefilledrectangle($destImg, $fgX + 10, $fgY + 10, $fgX + $fgW + 10, $fgY + $fgH + 10, $shadowColor);
-                    
-                    // Copiar imagen principal
-                    imagecopyresampled($destImg, $srcImg, (int)$fgX, (int)$fgY, 0, 0, (int)$fgW, (int)$fgH, $origW, $origH);
-                    
-                    // 5. Guardar resultado
-                    imagejpeg($destImg, $resultPath, 90);
+                    // 4. Guardar resultado
+                    imagejpeg($destImg, $resultPath, 95); // Alta calidad
                     
                     // Liberar memoria
                     imagedestroy($srcImg);
                     imagedestroy($destImg);
                     
                     $resultadoPath = '/storage/results/' . $filename;
-                    echo "[$id] ✓ Imagen Fallback creada ($targetW x $targetH): $resultadoPath\n";
+                    echo "[$id] ✓ Imagen Fallback (Cover) creada ($targetW x $targetH): $resultadoPath\n";
                     
                     $participanteModel->marcarComoCompletado($id, $resultadoPath);
-                    echo "[$id] ✓ Participante completado (Modo Contingencia)\n";
+                    echo "[$id] ✓ Participante completado (Modo Contingencia Simple)\n";
                     
                 } catch (Exception $gdError) {
                     echo "[$id] ⚠ Error generando fallback GD: " . $gdError->getMessage() . ". Usando copia simple.\n";
