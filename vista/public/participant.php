@@ -244,6 +244,134 @@
             overflow: hidden;
             position: relative;
         }
+
+        /* Mobile Fullscreen Optimization & Immersive Experience */
+        @media (max-width: 768px) {
+            body {
+                align-items: flex-start;
+                background: #000a1f;
+                padding: 0;
+                margin: 0;
+            }
+            
+            .glass-card {
+                max-width: 100%;
+                min-height: 100vh;
+                border: none;
+                border-radius: 0;
+                margin: 0;
+                padding: 0; /* Remove padding to allow image to touch edges */
+                display: flex;
+                flex-direction: column;
+                justify-content: center;
+                background: transparent;
+                backdrop-filter: none;
+                box-shadow: none;
+            }
+            
+            .logo {
+                margin-top: 1.5rem;
+                position: relative;
+                z-index: 20;
+                text-shadow: 0 2px 4px rgba(0,0,0,0.8);
+            }
+
+            /* WAITING STATE (Centered with dark background) */
+            #waiting-state {
+                padding: 2rem;
+                background: radial-gradient(circle at center, rgba(0,27,103,1), #000a1f);
+                min-height: 100vh;
+                display: flex;
+                flex-direction: column;
+                justify-content: center;
+                position: absolute;
+                top: 0;
+                left: 0;
+                width: 100%;
+                z-index: 10;
+            }
+            
+            /* SUCCESS STATE (Immersive Overlay) */
+            #success-state {
+                position: fixed;
+                top: 0;
+                left: 0;
+                width: 100%;
+                height: 100%;
+                z-index: 100;
+                display: flex;
+                flex-direction: column;
+                justify-content: flex-end; /* Controls at bottom */
+                padding-bottom: 2rem;
+            }
+            
+            /* Image covers entire screen */
+            #result-container {
+                position: absolute;
+                top: 0;
+                left: 0;
+                width: 100%;
+                height: 100%;
+                margin: 0;
+                border-radius: 0;
+                box-shadow: none;
+                z-index: 0;
+            }
+            
+            #final-image {
+                width: 100%;
+                height: 100%;
+                object-fit: cover; /* Fills screen cropping excess */
+                object-position: center;
+            }
+            
+            /* Floating Title */
+            #success-state > .mb-4:first-child {
+                position: absolute;
+                top: 0;
+                left: 0;
+                width: 100%;
+                padding: 5rem 1rem 3rem; /* Space for top bars */
+                background: linear-gradient(180deg, rgba(0,0,0,0.8) 0%, transparent 100%);
+                z-index: 10;
+                text-shadow: 0 2px 4px rgba(0,0,0,0.8);
+                pointer-events: none;
+            }
+            
+            #success-state h1 { font-size: 2.5rem; margin-bottom: 0; }
+            #success-state p { opacity: 0.9; font-size: 1rem; }
+
+            /* Buttons & Bottom Controls */
+            #download-link {
+                margin: 0 1.5rem 1rem;
+                position: relative;
+                z-index: 20;
+                box-shadow: 0 4px 15px rgba(0,0,0,0.5);
+                border: 1px solid rgba(255,255,255,0.3);
+                background: rgba(0, 27, 103, 0.8);
+                backdrop-filter: blur(10px);
+            }
+            
+            #success-state p.small {
+                position: relative;
+                z-index: 20;
+                text-shadow: 0 1px 2px rgba(0,0,0,1);
+                margin-bottom: 1rem;
+            }
+
+            /* Bottom Gradient for readability */
+            #success-state::before {
+                content: '';
+                position: absolute;
+                bottom: 0;
+                left: 0;
+                width: 100%;
+                height: 40%;
+                background: linear-gradient(0deg, rgba(0,0,0,0.95) 0%, transparent 100%);
+                z-index: 5;
+                pointer-events: none;
+            }
+        }
     </style>
 </head>
 <body>
