@@ -330,10 +330,68 @@ while ($continuar) {
             }
             
         } catch (Exception $e) {
-            echo "[$id] ✗ Error: " . $e->getMessage() . "\n";
-            
-            // Marcar como error
-            $participanteModel->marcarComoError($id, $e->getMessage());
+            $errorMsg = $e->getMessage();
+            $isQuotaError = (
+                stripos($errorMsg, 'insufficient_quota') !== false || 
+                stripos($errorMsg, 'payment_required') !== false ||
+                stripos($errorMsg, 'balance') !== false ||
+                strpos($errorMsg, '402') !== false
+            );
+
+            if ($isQuotaError) {
+                echo "[$id] ⚠ FALLO API DETECTADO (Cuota/Pago): $errorMsg\n";
+                echo "[$id] ⚡ ACTIVANDO SALVAVIDAS AUTOMÁTICO (Generando cover local)...\n";
+
+                // === LOGICA DE FALLBACK (COPIA LOCAL) ===
+                try {
+                    $targetW = 1080;
+                    $targetH = 1920;
+                    $filename = 'fallback_' . $id . '_' . time() . '.jpg';
+                    $resultPath = RESULTS_PATH . '/' . $filename;
+                    
+                    // 1. Cargar original
+                    $srcImg = @imagecreatefromstring(file_get_contents($photoPath));
+                    if (!$srcImg) throw new Exception("No se pudo cargar la imagen original para fallback");
+                    
+                    $origW = imagesx($srcImg);
+                    $origH = imagesy($srcImg);
+                    $destImg = imagecreatetruecolor($targetW, $targetH);
+                    
+                    // 2. Calcular crop (Cover)
+                    $ratioDest = $targetW / $targetH;
+                    $ratioOrig = $origW / $origH;
+                    
+                    $srcX = 0; $srcY = 0; $srcW = $origW; $srcH = $origH;
+
+                    if ($ratioOrig > $ratioDest) {
+                        $srcW = $origH * $ratioDest;
+                        $srcX = ($origW - $srcW) / 2;
+                    } else {
+                        $srcH = $origW / $ratioDest;
+                        $srcY = ($origH - $srcH) / 2;
+                    }
+
+                    // 3. Generar
+                    imagecopyresampled($destImg, $srcImg, 0, 0, (int)$srcX, (int)$srcY, $targetW, $targetH, (int)$srcW, (int)$srcH);
+                    imagejpeg($destImg, $resultPath, 95);
+                    
+                    imagedestroy($srcImg);
+                    imagedestroy($destImg);
+                    
+                    // 4. Marcar COMPLETADO (Salvado por la campana)
+                    $resultadoPath = '/storage/results/' . $filename;
+                    $participanteModel->marcarComoCompletado($id, $resultadoPath);
+                    echo "[$id] ✓ SALVAVIDAS EXITOSO: Imagen generada localmente.\n";
+                    
+                } catch (Exception $fallbackErr) {
+                    echo "[$id] ✗ FATAL: Falló incluso el salvavidas: " . $fallbackErr->getMessage() . "\n";
+                    $participanteModel->marcarComoError($id, "API falló y Fallback falló: " . $errorMsg);
+                }
+            } else {
+                // Error normal (no relacionado con cuota)
+                echo "[$id] ✗ Error: " . $errorMsg . "\n";
+                $participanteModel->marcarComoError($id, $errorMsg);
+            }
         }
         
         // Pequeña pausa entre procesamiento
