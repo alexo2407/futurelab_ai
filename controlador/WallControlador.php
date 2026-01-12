@@ -29,9 +29,9 @@ class WallControlador {
             $sinceId = isset($_GET['since_id']) ? (int)$_GET['since_id'] : null;
             $limit = isset($_GET['limit']) ? (int)$_GET['limit'] : 20;
             
-            // Limitar el límite máximo
-            if ($limit > 50) {
-                $limit = 50;
+            // Limitar el límite máximo (subido a 200 para eventos más grandes)
+            if ($limit > 200) {
+                $limit = 200;
             }
             
             $participantes = $this->participanteModel->obtenerUltimosCompletados($limit, $sinceId);

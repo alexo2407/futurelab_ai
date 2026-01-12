@@ -141,9 +141,9 @@
         // Cargar participantes
         async function loadParticipants() {
             try {
-                // Siempre pedir los últimos 20 (ordenados por fecha desc)
-                // No usamos since_id para evitar problemas con actualizaciones de registros viejos
-                const url = '<?php echo BASE_URL; ?>/api/public/latest?limit=20';
+                // Siempre pedir los últimos 100 (ordenados por fecha desc)
+                // Esto cubre un evento mediano sin problemas de paginación compleja
+                const url = '<?php echo BASE_URL; ?>/api/public/latest?limit=100';
                 const response = await fetch(url);
                 const data = await response.json();
                 
