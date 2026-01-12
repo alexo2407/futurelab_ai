@@ -111,26 +111,31 @@ foreach ($configs as $config) {
                 </div>
 
                 <!-- UNIFIED FALLBACK MODE TOGGLE (Global) -->
-                <div class="mb-3 form-check form-switch bg-light p-3 rounded border">
-                    <input 
-                        type="checkbox" 
-                        class="form-check-input" 
-                        id="ai_fallback_mode" 
-                        name="ai_fallback_mode"
-                        style="cursor: pointer;"
-                        <?php
-                        foreach ($configs as $c) {
-                            if ($c['config_key'] === 'ai_fallback_mode' && $c['config_value'] === '1') {
-                                echo 'checked';
+                <div class="alert alert-warning d-flex align-items-center justify-content-between shadow-sm border-warning mb-4" role="alert">
+                    <div>
+                        <div class="fw-bold fs-5 text-warning-emphasis">
+                            <i class="bi bi-shield-exclamation me-2"></i>Modo Contingencia
+                        </div>
+                        <div class="small text-muted mt-1">
+                            Forzar generación local (sin consumo de API). Útil para emergencias.
+                        </div>
+                    </div>
+                    
+                    <div class="form-check form-switch">
+                        <input 
+                            class="form-check-input" 
+                            type="checkbox" 
+                            role="switch" 
+                            id="ai_fallback_mode" 
+                            name="ai_fallback_mode"
+                            style="cursor: pointer; width: 3.5em; height: 1.75em;"
+                            <?php
+                            foreach ($configs as $c) {
+                                if ($c['config_key'] === 'ai_fallback_mode' && $c['config_value'] === '1') {
+                                    echo 'checked';
+                                }
                             }
-                        }
-                        ?>>
-                    <label class="form-check-label fw-bold unselectable" for="ai_fallback_mode" style="cursor: pointer;">
-                        <i class="bi bi-shield-exclamation text-warning me-1"></i> Modo Contingencia (Sin IA)
-                    </label>
-                    <div class="form-text mt-1">
-                        <strong>Actívalo si no hay internet o se acabaron los créditos.</strong><br>
-                        Genera un "Cover" limpio instantáneo usando la foto original (sin API).
+                            ?>>
                     </div>
                 </div>
                 
