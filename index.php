@@ -196,18 +196,9 @@ try {
     if (preg_match('#^/p/([A-Z0-9]{12})$#', $requestUri, $matches)) {
         // Mostrar página pública del participante
         $publicCode = $matches[1];
-        $participanteModel = new ParticipanteModel();
-        $participante = $participanteModel->obtenerPorPublicCode($publicCode);
-        
-        if ($participante) {
-            // Redirigir al muro o mostrar vista específica
-            header('Location: ' . BASE_URL . '/wall');
-            exit;
-        } else {
-            http_response_code(404);
-            echo "Participante no encontrado";
-            exit;
-        }
+        $controller = new ParticipanteControlador();
+        $controller->mostrarPublico($publicCode);
+        exit;
     }
     
     // ===== 404 - NOT FOUND =====

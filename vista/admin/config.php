@@ -39,11 +39,13 @@ foreach ($configs as $config) {
         }
         
         .config-card {
-            background: white;
+            background: var(--bg-card);
+            border: 1px solid var(--border-card);
             border-radius: 15px;
-            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.6);
             padding: 30px;
             margin-bottom: 20px;
+            color: var(--text-primary);
         }
         
         .btn-test {
@@ -608,6 +610,12 @@ foreach ($configs as $config) {
         </div>
     </div>
     
+    <footer class="text-center py-4 mt-5 text-muted">
+        <div class="container">
+            <p class="mb-0">Desarrollado por Alberto Calero</p>
+        </div>
+    </footer>
+
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <script>

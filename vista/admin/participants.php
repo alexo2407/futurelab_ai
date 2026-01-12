@@ -18,21 +18,20 @@ $user = currentUser();
     <!-- DataTables -->
     <link rel="stylesheet" href="https://cdn.datatables.net/1.13.6/css/dataTables.bootstrap5.min.css">
     
+    <link rel="stylesheet" href="<?php echo BASE_URL; ?>/vista/css/estilos.css">
+    
     <style>
-        :root {
-            --primary-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-        }
-        
         body {
-            background: #f5f7fa;
+            color: var(--text-primary);
         }
         
         .header {
-            background: var(--primary-gradient);
+            background: rgba(0, 27, 103, 0.8);
+            backdrop-filter: blur(10px);
             color: white;
             padding: 20px;
             margin-bottom: 30px;
-            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            border-bottom: 1px solid var(--glass-border);
         }
         
         .main-container {
@@ -41,30 +40,71 @@ $user = currentUser();
  margin: 0 auto;
         }
         
-        .card {
-            border: none;
-            border-radius: 15px;
-            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        /* Handled by global .glass-card class */
+        
+        .table {
+            color: var(--text-secondary);
         }
         
         .table th {
-            background: #f8f9fa;
-            font-weight: 600;
+            background-color: rgba(0, 27, 103, 0.5);
+            color: var(--accent-color);
+            border-bottom: 2px solid var(--secondary-color);
+            border-top: none;
+        }
+        
+        .table td {
+            border-bottom: 1px solid var(--glass-border);
+            vertical-align: middle;
+        }
+        
+        .dataTables_wrapper .dataTables_length, 
+        .dataTables_wrapper .dataTables_filter, 
+        .dataTables_wrapper .dataTables_info, 
+        .dataTables_wrapper .dataTables_paginate {
+            color: var(--text-secondary) !important;
+            margin-top: 1rem;
+        }
+        
+        .dataTables_wrapper .dataTables_length select,
+        .dataTables_wrapper .dataTables_filter input {
+            background-color: rgba(0, 10, 31, 0.6);
+            border: 1px solid var(--secondary-color);
+            color: white;
+        }
+
+        .page-link {
+            background-color: rgba(0, 10, 31, 0.6);
+            border-color: var(--secondary-color);
+            color: var(--text-primary);
+        }
+        
+        .page-item.active .page-link {
+            background-color: var(--primary-color);
+            border-color: var(--accent-color);
+            color: var(--accent-color);
+        }
+
+        .page-item.disabled .page-link {
+             background-color: rgba(255, 255, 255, 0.05);
+             border-color: var(--glass-border);
+             color: rgba(255, 255, 255, 0.3);
         }
     </style>
 </head>
 <body>
+    <div class="bg-animation"></div>
     <div class="header">
         <div class="container-fluid">
             <div class="row align-items-center">
                 <div class="col">
-                    <h1><i class="bi bi-people-fill me-2"></i>Lista de Participantes</h1>
+                    <h1><i class="bi bi-people-fill me-2 text-accent"></i>Lista de Participantes</h1>
                 </div>
                 <div class="col-auto">
-                    <a href="<?php echo BASE_URL; ?>/admin/generate" class="btn btn-light me-2">
+                    <a href="<?php echo BASE_URL; ?>/admin/generate" class="btn btn-primary me-2">
                         <i class="bi bi-plus-circle"></i> Generar Nuevo
                     </a>
-                    <a href="<?php echo BASE_URL; ?>/admin/careers" class="btn btn-light me-2">
+                    <a href="<?php echo BASE_URL; ?>/admin/careers" class="btn btn-primary me-2">
                         <i class="bi bi-mortarboard"></i> Carreras
                     </a>
                     <a href="<?php echo BASE_URL; ?>/wall" class="btn btn-outline-light me-2" target="_blank">
@@ -73,7 +113,7 @@ $user = currentUser();
                     <a href="<?php echo BASE_URL; ?>/admin/config" class="btn btn-outline-light me-2">
                         <i class="bi bi-gear"></i> Configuración
                     </a>
-                    <span class="text-white me-2">
+                    <span class="text-white-50 me-2">
                         <i class="bi bi-person-circle"></i> <?php echo htmlspecialchars($user['username']); ?>
                     </span>
                     <a href="<?php echo BASE_URL; ?>/auth/logout" class="btn btn-outline-light">
@@ -85,14 +125,15 @@ $user = currentUser();
     </div>
     
     <div class="main-container">
-        <div class="card">
+        <div class="card fade-in">
             <div class="card-body">
-                <table id="participants-table" class="table table-striped table-hover">
+                <table id="participants-table" class="table table-glass table-hover">
                     <thead>
                         <tr>
                             <th>ID</th>
                             <th>Fecha</th>
                             <th>Nombre</th>
+                            <th>Teléfono</th>
                             <th>Carrera</th>
                             <th>Estado</th>
                             <th>Resultado</th>
@@ -127,14 +168,14 @@ $user = currentUser();
     <!-- Modal para ver QR -->
     <div class="modal fade" id="qrModal" tabindex="-1">
         <div class="modal-dialog modal-dialog-centered">
-            <div class="modal-content">
-                <div class="modal-header">
+            <div class="modal-content bg-dark text-white border-secondary">
+                <div class="modal-header border-secondary">
                     <h5 class="modal-title">Código QR</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
                 </div>
                 <div class="modal-body text-center">
-                    <img id="modalQR" class="img-fluid" alt="QR Code">
-                    <p class="mt-3"><strong>Código:</strong> <span id="modalQRCode"></span></p>
+                    <img id="modalQR" class="img-fluid p-2 rounded" style="background: var(--bg-elevated);" alt="QR Code">
+                    <p class="mt-3"><strong>Código:</strong> <span id="modalQRCode" class="text-accent"></span></p>
                 </div>
             </div>
         </div>
@@ -157,6 +198,12 @@ $user = currentUser();
         </div>
     </div>
     
+    <footer class="text-center py-4 mt-5 text-white-50">
+        <div class="container">
+            <p class="mb-0">Desarrollado por Alberto Calero</p>
+        </div>
+    </footer>
+
     <!-- Scripts -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/jquery@3.7.0/dist/jquery.min.js"></script>
@@ -175,12 +222,13 @@ $user = currentUser();
                     { data: 0 },
                     { data: 1 },
                     { data: 2 },
-                    { data: 3 },
+                    { data: 3 }, // Teléfono
                     { data: 4 },
-                    { data: 5, orderable: false },
+                    { data: 5 },
                     { data: 6, orderable: false },
-                    { data: 7 },
-                    { data: 8, orderable: false }
+                    { data: 7, orderable: false },
+                    { data: 8 },
+                    { data: 9, orderable: false }
                 ],
                 order: [[0, 'desc']],
                 language: {
@@ -230,6 +278,7 @@ $user = currentUser();
                             <p><strong>ID:</strong> ${data.id}</p>
                             <p><strong>Código Público:</strong> ${data.public_code}</p>
                             <p><strong>Nombre:</strong> ${data.first_name} ${data.last_name}</p>
+                            <p><strong>Teléfono:</strong> ${data.phone ? data.phone : 'N/A'}</p>
                             <p><strong>Carrera:</strong> ${data.career_name}</p>
                             <p><strong>Estado:</strong> ${data.status}</p>
                             <p><strong>Creado:</strong> ${data.created_at}</p>

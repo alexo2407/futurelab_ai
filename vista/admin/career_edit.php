@@ -33,13 +33,7 @@ $user = currentUser();
             box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
         }
         
-        .edit-card {
-            background: white;
-            border-radius: 15px;
-            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
-            padding: 30px;
-            margin-bottom: 20px;
-        }
+        /* Handled by global .glass-card class */
         
         .reference-preview {
             max-width: 300px;
@@ -51,17 +45,48 @@ $user = currentUser();
 </head>
 <body>
     <div class="header">
-        <div class="container">
-            <a href="<?php echo BASE_URL; ?>/admin/careers" class="btn btn-light btn-sm mb-2">
-                <i class="bi bi-arrow-left"></i> Volver
-            </a>
-            <h1><i class="bi bi-pencil-fill me-2"></i>Editar Carrera</h1>
-            <p class="mb-0"><?php echo htmlspecialchars($carrera['name']); ?></p>
+        <div class="container-fluid">
+            <div class="row align-items-center">
+                <div class="col">
+                    <h1><i class="bi bi-mortarboard-fill me-2"></i>Gestión de Carreras</h1>
+                </div>
+                <div class="col-auto">
+                    <a href="<?php echo BASE_URL; ?>/admin/generate" class="btn btn-light me-2">
+                        <i class="bi bi-camera"></i> Generar
+                    </a>
+                    <a href="<?php echo BASE_URL; ?>/admin/participants" class="btn btn-light me-2">
+                        <i class="bi bi-list-ul"></i> Participantes
+                    </a>
+                    <a href="<?php echo BASE_URL; ?>/admin/careers" class="btn btn-light me-2">
+                        <i class="bi bi-mortarboard"></i> Carreras
+                    </a>
+                    <a href="<?php echo BASE_URL; ?>/wall" class="btn btn-outline-light me-2" target="_blank">
+                        <i class="bi bi-display"></i> Muro
+                    </a>
+                    <a href="<?php echo BASE_URL; ?>/admin/config" class="btn btn-outline-light me-2">
+                        <i class="bi bi-gear"></i> Config
+                    </a>
+                    <span class="text-white me-2">
+                        <i class="bi bi-person-circle"></i> <?php echo htmlspecialchars($user['username']); ?>
+                    </span>
+                    <a href="<?php echo BASE_URL; ?>/auth/logout" class="btn btn-outline-light">
+                        <i class="bi bi-box-arrow-right"></i> Salir
+                    </a>
+                </div>
+            </div>
         </div>
     </div>
     
     <div class="container">
-        <div class="edit-card">
+        <div class="mb-4">
+             <a href="<?php echo BASE_URL; ?>/admin/careers" class="btn btn-outline-secondary btn-sm mb-2">
+                <i class="bi bi-arrow-left"></i> Volver a la lista
+            </a>
+            <h2><i class="bi bi-pencil-fill me-2"></i>Editar Carrera</h2>
+            <h4 class="text-muted"><?php echo htmlspecialchars($carrera['name']); ?></h4>
+        </div>
+
+        <div class="edit-card card fade-in">
             <form id="form-edit-career" enctype="multipart/form-data">
                 <input type="hidden" name="id" value="<?php echo $carrera['id']; ?>">
                 
@@ -201,6 +226,12 @@ $user = currentUser();
         </div>
     </div>
     
+    <footer class="text-center py-4 mt-5 text-muted">
+        <div class="container">
+            <p class="mb-0">Desarrollado por Alberto Calero</p>
+        </div>
+    </footer>
+
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <script>

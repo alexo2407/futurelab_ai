@@ -65,6 +65,7 @@ class ParticipanteControlador {
             // Validar campos
             $firstName = trim($_POST['first_name'] ?? '');
             $lastName = trim($_POST['last_name'] ?? '');
+            $phone = trim($_POST['phone'] ?? '');
             $careerId = (int)($_POST['career_id'] ?? 0);
             
             if (empty($firstName)) {
@@ -139,11 +140,11 @@ class ParticipanteControlador {
             // Ruta relativa para BD
             $relativePath = '/storage/uploads/' . $filename;
             
-            // Generar código QR payload
+            // Generar código público PRIMERO
             $publicCode = $this->participanteModel->generarPublicCode();
             $qrPayload = BASE_URL . '/p/' . $publicCode;
             
-            // Generar QR code
+            // Generar QR code con el código generado
             $qrFilename = $publicCode . '.png';
             $qrPath = QR_PATH . '/' . $qrFilename;
             $qrRelativePath = '/storage/qr/' . $qrFilename;
@@ -155,10 +156,12 @@ class ParticipanteControlador {
                 $qrRelativePath = null;
             }
             
-            // Crear participante en BD
-            $resultado = $this->participanteModel->crear([
+            // Crear participante en BD con el MISMO código usado en el QR
+            $resultado = $this->participanteModel->crearConCodigo([
+                'public_code' => $publicCode,
                 'first_name' => $firstName,
                 'last_name' => $lastName,
+                'phone' => $phone,
                 'career_id' => $careerId,
                 'photo_original_path' => $relativePath,
                 'photo_original_mime' => $mimeType,
@@ -187,7 +190,7 @@ class ParticipanteControlador {
             echo json_encode([
                 'ok' => true,
                 'participant_id' => $resultado['id'],
-                'public_code' => $resultado['public_code'],
+                'public_code' => $publicCode,
                 'qr_url' => STORAGE_URL . '/qr/' . $qrFilename,
                 'status_url' => BASE_URL . '/api/participants/status?id=' . $resultado['id']
             ]);
@@ -357,5 +360,21 @@ class ParticipanteControlador {
             http_response_code(400);
             echo json_encode(['ok' => false, 'error' => $e->getMessage()]);
         }
+    }
+    
+    /**
+     * Muestra la vista pública del participante (para el QR)
+     */
+    public function mostrarPublico($publicCode) {
+        $participante = $this->participanteModel->obtenerPorPublicCode($publicCode);
+        
+        if (!$participante) {
+            http_response_code(404);
+            echo "Participante no encontrado";
+            return;
+        }
+        
+        // Incluir la vista pública
+        include __DIR__ . '/../vista/public/participant.php';
     }
 }

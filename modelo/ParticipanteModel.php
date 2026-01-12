@@ -54,58 +54,144 @@ class ParticipanteModel {
     }
     
     /**
-     * Crea un nuevo participante
-     * @param array $datos Array con: first_name, last_name, career_id, photo_original_path, photo_original_mime, photo_original_sha256, qr_payload, qr_image_path, created_by_user_id
-     * @return array|false Array con id y public_code, o false si falla
+ * Crea un nuevo participante
+ * @param array $datos Array con: first_name, last_name, career_id, photo_original_path, photo_original_mime, photo_original_sha256, created_by_user_id
+ * @return array|false Array con id y public_code, o false si falla
+ */
+public function crear($datos) {
+    try {
+        $db = $this->conexion->conectar();
+        
+        $publicCode = $this->generarPublicCode();
+        
+        $stmt = $db->prepare("
+            INSERT INTO participants (
+                public_code, first_name, last_name, phone, career_id,
+                photo_original_path, photo_original_mime, photo_original_sha256,
+                qr_payload, qr_image_path, created_by_user_id,
+                status, created_at, updated_at
+            ) VALUES (
+                :public_code, :first_name, :last_name, :phone, :career_id,
+                :photo_original_path, :photo_original_mime, :photo_original_sha256,
+                :qr_payload, :qr_image_path, :created_by_user_id,
+                'queued', NOW(), NOW()
+            )
+        ");
+        
+        $resultado = $stmt->execute([
+            'public_code' => $publicCode,
+            'first_name' => $datos['first_name'],
+            'last_name' => $datos['last_name'],
+            'phone' => $datos['phone'] ?? null,
+            'career_id' => $datos['career_id'],
+            'photo_original_path' => $datos['photo_original_path'],
+            'photo_original_mime' => $datos['photo_original_mime'] ?? null,
+            'photo_original_sha256' => $datos['photo_original_sha256'] ?? null,
+            'qr_payload' => $datos['qr_payload'] ?? null,
+            'qr_image_path' => $datos['qr_image_path'] ?? null,
+            'created_by_user_id' => $datos['created_by_user_id']
+        ]);
+        
+        if ($resultado) {
+            return [
+                'id' => $db->lastInsertId(),
+                'public_code' => $publicCode
+            ];
+        }
+        
+        return false;
+        
+    } catch (PDOException $e) {
+        error_log('Error creando participante: ' . $e->getMessage());
+        return false;
+    }
+}
+    
+    /**
+     * Actualiza la información del QR de un participante
+     * @param int $id ID del participante
+     * @param string $qrPayload Payload del QR
+     * @param string|null $qrImagePath Ruta de la imagen del QR
+     * @return bool
      */
-    public function crear($datos) {
+    public function actualizarQR($id, $qrPayload, $qrImagePath) {
         try {
             $db = $this->conexion->conectar();
             
-            $publicCode = $this->generarPublicCode();
-            
             $stmt = $db->prepare("
-                INSERT INTO participants (
-                    public_code, first_name, last_name, career_id,
-                    photo_original_path, photo_original_mime, photo_original_sha256,
-                    qr_payload, qr_image_path, created_by_user_id,
-                    status, created_at, updated_at
-                ) VALUES (
-                    :public_code, :first_name, :last_name, :career_id,
-                    :photo_original_path, :photo_original_mime, :photo_original_sha256,
-                    :qr_payload, :qr_image_path, :created_by_user_id,
-                    'queued', NOW(), NOW()
-                )
+                UPDATE participants 
+                SET qr_payload = :qr_payload,
+                    qr_image_path = :qr_image_path,
+                    updated_at = NOW()
+                WHERE id = :id
             ");
             
-            $resultado = $stmt->execute([
-                'public_code' => $publicCode,
-                'first_name' => $datos['first_name'],
-                'last_name' => $datos['last_name'],
-                'career_id' => $datos['career_id'],
-                'photo_original_path' => $datos['photo_original_path'],
-                'photo_original_mime' => $datos['photo_original_mime'] ?? null,
-                'photo_original_sha256' => $datos['photo_original_sha256'] ?? null,
-                'qr_payload' => $datos['qr_payload'],
-                'qr_image_path' => $datos['qr_image_path'] ?? null,
-                'created_by_user_id' => $datos['created_by_user_id']
+            return $stmt->execute([
+                'id' => $id,
+                'qr_payload' => $qrPayload,
+                'qr_image_path' => $qrImagePath
             ]);
             
-            if ($resultado) {
-                return [
-                    'id' => $db->lastInsertId(),
-                    'public_code' => $publicCode
-                ];
-            }
-            
-            return false;
-            
         } catch (PDOException $e) {
-            error_log('Error creando participante: ' . $e->getMessage());
+            error_log('Error actualizando QR: ' . $e->getMessage());
             return false;
         }
     }
     
+
+    /**
+ * Crea un nuevo participante con un código público específico
+ * @param array $datos Array con: public_code, first_name, last_name, career_id, photo_original_path, qr_payload, qr_image_path, created_by_user_id
+ * @return array|false Array con id y public_code, o false si falla
+ */
+public function crearConCodigo($datos) {
+    try {
+        $db = $this->conexion->conectar();
+        
+        $stmt = $db->prepare("
+            INSERT INTO participants (
+                public_code, first_name, last_name, phone, career_id,
+                photo_original_path, photo_original_mime, photo_original_sha256,
+                qr_payload, qr_image_path, created_by_user_id,
+                status, created_at, updated_at
+            ) VALUES (
+                :public_code, :first_name, :last_name, :phone, :career_id,
+                :photo_original_path, :photo_original_mime, :photo_original_sha256,
+                :qr_payload, :qr_image_path, :created_by_user_id,
+                'queued', NOW(), NOW()
+            )
+        ");
+        
+        $resultado = $stmt->execute([
+            'public_code' => $datos['public_code'],
+            'first_name' => $datos['first_name'],
+            'last_name' => $datos['last_name'],
+            'phone' => $datos['phone'] ?? null,
+            'career_id' => $datos['career_id'],
+            'photo_original_path' => $datos['photo_original_path'],
+            'photo_original_mime' => $datos['photo_original_mime'] ?? null,
+            'photo_original_sha256' => $datos['photo_original_sha256'] ?? null,
+            'qr_payload' => $datos['qr_payload'],
+            'qr_image_path' => $datos['qr_image_path'] ?? null,
+            'created_by_user_id' => $datos['created_by_user_id']
+        ]);
+        
+        if ($resultado) {
+            return [
+                'id' => $db->lastInsertId(),
+                'public_code' => $datos['public_code']
+            ];
+        }
+        
+        return false;
+        
+    } catch (PDOException $e) {
+        error_log('Error creando participante con código: ' . $e->getMessage());
+        return false;
+    }
+}
+
+
     /**
      * Obtiene un participante por ID con datos de carrera
      * @param int $id
@@ -361,6 +447,7 @@ class ParticipanteModel {
                 $searchQuery = " WHERE (
                     p.first_name LIKE :search OR
                     p.last_name LIKE :search OR
+                    p.phone LIKE :search OR
                     p.public_code LIKE :search OR
                     c.name LIKE :search OR
                     p.status LIKE :search
@@ -387,6 +474,7 @@ class ParticipanteModel {
                     p.public_code,
                     p.first_name,
                     p.last_name,
+                    p.phone,
                     p.status,
                     p.result_image_path,
                     p.qr_image_path,

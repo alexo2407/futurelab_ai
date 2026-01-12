@@ -8,14 +8,15 @@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
     
+    <link rel="stylesheet" href="<?php echo BASE_URL; ?>/vista/css/estilos.css">
+    
     <style>
         body, html {
             margin: 0;
             padding: 0;
             height: 100%;
             overflow: hidden;
-            background: #000;
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            /* bg-dark handled by global css */
         }
         
         #carousel-container {
@@ -53,13 +54,8 @@
         }
         
         .participant-info {
-            color: white;
-            text-align: center;
-            margin-top: 30px;
-            padding: 20px;
-            background: linear-gradient(135deg, rgba(102, 126, 234, 0.8), rgba(118, 75, 162, 0.8));
-            border-radius: 15px;
             max-width: 600px;
+            margin-top: 30px;
         }
         
         .participant-info h2 {
@@ -78,7 +74,7 @@
             position: absolute;
             top: 30px;
             left: 30px;
-            color: white;
+            color: var(--text-primary);
             font-size: 2rem;
             font-weight: 700;
             text-shadow: 0 2px 10px rgba(0, 0, 0, 0.5);
@@ -88,11 +84,13 @@
             position: absolute;
             top: 30px;
             right: 30px;
-            color: white;
+            color: var(--primary-color);
             font-size: 1.2rem;
-            background: rgba(0, 0, 0, 0.5);
+            background: var(--accent-color);
             padding: 10px 20px;
             border-radius: 50px;
+            font-weight: bold;
+            box-shadow: 0 0 15px rgba(242, 174, 61, 0.4);
         }
         
         .no-participants {
@@ -112,8 +110,9 @@
     </style>
 </head>
 <body>
+    <div class="bg-animation"></div>
     <div class="logo">
-        <i class="bi bi-robot"></i> FutureLab AI
+        <i class="bi bi-robot text-accent"></i> FutureLab AI
     </div>
     
     <div class="counter">
@@ -180,7 +179,7 @@
                     <img src="${participant.result_image_url}" 
                          alt="${participant.name}" 
                          class="participant-image">
-                    <div class="participant-info">
+                    <div class="participant-info card text-center p-4">
                         <h2>${participant.name}</h2>
                         <p><i class="bi bi-mortarboard-fill"></i> ${participant.career}</p>
                     </div>

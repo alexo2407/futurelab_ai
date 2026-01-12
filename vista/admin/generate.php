@@ -17,31 +17,24 @@ $user = currentUser();
     <!-- SweetAlert2 -->
     <link href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css" rel="stylesheet">
     
+    <link rel="stylesheet" href="<?php echo BASE_URL; ?>/vista/css/estilos.css">
+    
     <style>
-        :root {
-            --primary-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-        }
-        
         body {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 50%, #f093fb 100%);
-            min-height: 100vh;
             padding: 20px;
         }
         
         .main-container {
             max-width: 800px;
             margin: 0 auto;
-            background: white;
-            border-radius: 20px;
-            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
-            overflow: hidden;
         }
         
         .header {
-            background: var(--primary-gradient);
+            background: rgba(0, 27, 103, 0.8);
             color: white;
             padding: 30px;
             text-align: center;
+            border-bottom: 1px solid var(--glass-border);
         }
         
         #video-container {
@@ -65,8 +58,8 @@ $user = currentUser();
         }
         
         .btn-capture {
-            background: var(--primary-gradient);
-            border: none;
+            background: var(--brand-gradient);
+            border: 1px solid var(--secondary-color);
             color: white;
             padding: 15px 30px;
             border-radius: 50px;
@@ -75,7 +68,8 @@ $user = currentUser();
         
         .btn-capture:hover {
             transform: scale(1.05);
-            box-shadow: 0 10px 25px rgba(102, 126, 234, 0.4);
+            box-shadow: 0 10px 25px rgba(0, 27, 103, 0.4);
+            color: var(--accent-color);
         }
         
         #qr-modal .modal-dialog {
@@ -94,12 +88,13 @@ $user = currentUser();
     </style>
 </head>
 <body>
-    <div class="main-container">
-        <div class="header">
-            <h1><i class="bi bi-camera-fill me-2"></i>Generar Participante</h1>
+    <div class="bg-animation"></div>
+    <div class="main-container card fade-in">
+        <div class="header card-header">
+            <h1><i class="bi bi-camera-fill me-2 text-accent"></i>Generar Participante</h1>
             <p class="mb-0">Captura la foto y completa los datos</p>
             <div class="mt-3">
-                <small>Usuario: <?php echo htmlspecialchars($user['username']); ?> | 
+                <small class="text-white-50">Usuario: <?php echo htmlspecialchars($user['username']); ?> | 
                 <a href="<?php echo BASE_URL; ?>/admin/participants" class="text-white">
                     <i class="bi bi-list-ul"></i> Participantes
                 </a> |
@@ -138,13 +133,17 @@ $user = currentUser();
             
             <form id="form-participant">
                 <div class="row">
-                    <div class="col-md-6 mb-3">
+                    <div class="col-md-4 mb-3">
                         <label for="first_name" class="form-label">Nombre</label>
                         <input type="text" class="form-control" id="first_name" name="first_name" required>
                     </div>
-                    <div class="col-md-6 mb-3">
+                    <div class="col-md-4 mb-3">
                         <label for="last_name" class="form-label">Apellido</label>
                         <input type="text" class="form-control" id="last_name" name="last_name" required>
+                    </div>
+                    <div class="col-md-4 mb-3">
+                        <label for="phone" class="form-label">Teléfono</label>
+                        <input type="tel" class="form-control" id="phone" name="phone" placeholder="+502 1234 5678">
                     </div>
                 </div>
                 
@@ -172,27 +171,38 @@ $user = currentUser();
         <div id="result-screen" class="p-4" style="display: none;">
             <div class="text-center">
                 <div id="loading-state">
-                    <div class="spinner-border text-primary mb-3" role="status"></div>
-                    <h3>Procesando imagen con IA...</h3>
-                    <p class="text-muted">Esto puede tomar unos segundos</p>
+                    <div class="premium-loader mb-3">
+                        <div class="pulse-ring"></div>
+                        <svg>
+                            <defs>
+                                <linearGradient id="loaderGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                                    <stop offset="0%" stop-color="#195C9C" />
+                                    <stop offset="100%" stop-color="#F2AE3D" />
+                                </linearGradient>
+                            </defs>
+                            <circle cx="60" cy="60" r="45" class="loader-bg"></circle>
+                            <circle cx="60" cy="60" r="45" class="loader-progress"></circle>
+                        </svg>
+                        <div class="position-absolute top-50 start-50 translate-middle">
+                            <i class="bi bi-stars text-white" style="font-size: 1.5rem;"></i>
+                        </div>
+                    </div>
+                    <h3 class="text-gradient">Procesando imagen con IA...</h3>
+                    <p class="text-secondary">Esto puede tomar unos segundos</p>
                 </div>
                 
-                <div id="success-state" style="display: none;">
-                    <i class="bi bi-check-circle-fill text-success" style="font-size: 4rem;"></i>
-                    <h3 class="mt-3">¡Participante Generado!</h3>
+                <div id="success-state" class="fade-in" style="display: none;">
+                    <i class="bi bi-qr-code text-accent breathing" style="font-size: 4rem;"></i>
+                    <h3 class="mt-3 text-gradient">¡Escanea tu Código!</h3>
+                    <p class="text-secondary">Tu imagen estará lista en un momento.</p>
                     
-                    <div id="result-image-container" class="my-4">
-                        <img id="result-image" class="img-fluid rounded" alt="Resultado" style="max-height: 300px;">
+                    <div class="my-4 text-center">
+                        <img id="qr-display-image" class="img-fluid border p-2 rounded" style="max-width: 300px; background: var(--bg-elevated);" alt="QR Code">
+                        <p class="mt-2 font-monospace fs-4 text-primary" id="public-code-display"></p>
                     </div>
                     
-                    <button class="btn btn-primary btn-lg mb-3" onclick="showQR()">
-                        <i class="bi bi-qr-code"></i> Ver Código QR
-                    </button>
-                    
-                    <br>
-                    
-                    <button class="btn btn-success btn-lg" onclick="resetForm()">
-                        <i class="bi bi-plus-circle"></i> Generar Otro Participante
+                    <button class="btn btn-success btn-lg mt-3" onclick="resetForm()">
+                        <i class="bi bi-plus-circle"></i> Siguiente Participante
                     </button>
                 </div>
             </div>
@@ -217,6 +227,12 @@ $user = currentUser();
         </div>
     </div>
     
+    <footer class="text-center py-4 mt-5 text-white">
+        <div class="container">
+            <p class="mb-0">Desarrollado por Alberto Calero</p>
+        </div>
+    </footer>
+
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <script>
@@ -320,12 +336,15 @@ $user = currentUser();
                 qrUrl = data.qr_url;
                 statusUrl = data.status_url;
                 
-                // Mostrar pantalla de resultado
+                // Mostrar QR inmediatamente
                 document.getElementById('capture-form').style.display = 'none';
                 document.getElementById('result-screen').style.display = 'block';
+                document.getElementById('loading-state').style.display = 'none';
+                document.getElementById('success-state').style.display = 'block';
                 
-                // Iniciar polling
-                pollStatus();
+                // Mostrar el QR
+                document.getElementById('qr-display-image').src = qrUrl;
+                document.getElementById('public-code-display').textContent = data.public_code;
                 
             } catch (err) {
                 Swal.fire({
@@ -339,50 +358,7 @@ $user = currentUser();
             }
         });
         
-        // Polling de estado
-        async function pollStatus() {
-            try {
-                const response = await fetch(statusUrl);
-                const data = await response.json();
-                
-                if (data.status === 'done') {
-                    // Completado!
-                    document.getElementById('loading-state').style.display = 'none';
-                    document.getElementById('success-state').style.display = 'block';
-                    
-                    if (data.result_image_url) {
-                        document.getElementById('result-image').src = data.result_image_url;
-                    } else {
-                        // Si no hay imagen generada, mostrar la original
-                        document.getElementById('result-image').src = previewImage.src;
-                    }
-                } else if (data.status === 'error') {
-                    Swal.fire({
-                        icon: 'error',
-                        title: 'Error al Procesar',
-                        text: data.error_message || 'Error desconocido',
-                        confirmButtonColor: '#667eea'
-                    }).then(() => {
-                        resetForm();
-                    });
-                } else {
-                    // Seguir esperando
-                    setTimeout(pollStatus, 3000);
-                }
-            } catch (err) {
-                console.error('Error en polling:', err);
-                setTimeout(pollStatus, 5000);
-            }
-        }
         
-        // Mostrar QR
-        function showQR() {
-            if (qrUrl) {
-                document.getElementById('qr-image').src = qrUrl;
-                document.getElementById('qr-public-code').textContent = currentParticipantId;
-                new bootstrap.Modal(document.getElementById('qr-modal')).show();
-            }
-        }
         
         // Reset formulario
         function resetForm() {

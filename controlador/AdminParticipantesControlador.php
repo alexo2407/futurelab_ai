@@ -102,6 +102,7 @@ class AdminParticipantesControlador {
                     $row['id'],
                     date('Y-m-d H:i', strtotime($row['created_at'])),
                     htmlspecialchars($row['first_name'] . ' ' . $row['last_name']),
+                    htmlspecialchars($row['phone'] ?? 'N/A'),
                     htmlspecialchars($row['career_name'] ?? 'N/A'),
                     $statusBadge,
                     $resultImage,

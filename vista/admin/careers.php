@@ -13,36 +13,27 @@ $user = currentUser();
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
     
+    <link rel="stylesheet" href="<?php echo BASE_URL; ?>/vista/css/estilos.css">
+    
     <style>
-        :root {
-            --primary-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-        }
-        
         body {
-            background: #f5f7fa;
+            color: var(--text-primary);
         }
         
         .header {
-            background: var(--primary-gradient);
+            background: rgba(0, 27, 103, 0.8);
+            backdrop-filter: blur(10px);
             color: white;
             padding: 20px;
             margin-bottom: 30px;
-            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            border-bottom: 1px solid var(--glass-border);
         }
         
         .career-card {
-            background: white;
-            border-radius: 10px;
-            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
             margin-bottom: 15px;
-            overflow: hidden;
-            transition: transform 0.2s;
         }
         
-        .career-card:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.15);
-        }
+        /* Handled by global .card-elevated class */
         
         .career-card-body {
             padding: 20px;
@@ -68,18 +59,19 @@ $user = currentUser();
     </style>
 </head>
 <body>
+    <div class="bg-animation"></div>
     <div class="header">
         <div class="container-fluid">
             <div class="row align-items-center">
                <div class="col">
-                    <h1><i class="bi bi-mortarboard-fill me-2"></i>Gestión de Carreras</h1>
+                    <h1><i class="bi bi-mortarboard-fill me-2 text-accent"></i>Gestión de Carreras</h1>
                     <p class="mb-0">Personaliza prompts e imágenes de referencia para Gemini AI</p>
                 </div>
                 <div class="col-auto">
-                    <a href="<?php echo BASE_URL; ?>/admin/generate" class="btn btn-light me-2">
+                    <a href="<?php echo BASE_URL; ?>/admin/generate" class="btn btn-primary me-2">
                         <i class="bi bi-camera"></i> Generar
                     </a>
-                    <a href="<?php echo BASE_URL; ?>/admin/participants" class="btn btn-light me-2">
+                    <a href="<?php echo BASE_URL; ?>/admin/participants" class="btn btn-primary me-2">
                         <i class="bi bi-list-ul"></i> Participantes
                     </a>
                     <a href="<?php echo BASE_URL; ?>/wall" class="btn btn-outline-light me-2" target="_blank">
@@ -88,7 +80,7 @@ $user = currentUser();
                     <a href="<?php echo BASE_URL; ?>/admin/config" class="btn btn-outline-light me-2">
                         <i class="bi bi-gear"></i> Config
                     </a>
-                    <span class="text-white me-2">
+                    <span class="text-white-50 me-2">
                         <i class="bi bi-person-circle"></i> <?php echo htmlspecialchars($user['username']); ?>
                     </span>
                     <a href="<?php echo BASE_URL; ?>/auth/logout" class="btn btn-outline-light">
@@ -102,7 +94,7 @@ $user = currentUser();
     <div class="container">
         <div class="row mb-3">
             <div class="col">
-                <div class="alert alert-info">
+                <div class="alert alert-info bg-transparent border-info text-info">
                     <i class="bi bi-info-circle me-2"></i>
                     <strong>Personalización por carrera:</strong> Define un prompt único y/o imagen de referencia para cada carrera. 
                     El worker usará esta información al generar imágenes con Gemini AI.
@@ -123,7 +115,7 @@ $user = currentUser();
                 $cardClass .= ' has-image';
             }
         ?>
-            <div class="<?php echo $cardClass; ?>">
+            <div class="<?php echo $cardClass; ?> card fade-in">
                 <div class="career-card-body">
                     <div class="row align-items-center">
                         <div class="col-md-6">
@@ -133,7 +125,7 @@ $user = currentUser();
                                     <span class="badge bg-secondary">Inactiva</span>
                                 <?php endif; ?>
                             </h5>
-                            <small class="text-muted">
+                            <small class="text-white-50">
                                 <?php echo htmlspecialchars($carrera['category'] ?? 'Sin categoría'); ?>
                             </small>
                             
@@ -182,6 +174,12 @@ $user = currentUser();
         <?php endforeach; ?>
     </div>
     
+    <footer class="text-center py-4 mt-5 text-white-50">
+        <div class="container">
+            <p class="mb-0">Desarrollado por Alberto Calero</p>
+        </div>
+    </footer>
+
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>

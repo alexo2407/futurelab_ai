@@ -9,32 +9,14 @@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
     
+    <link rel="stylesheet" href="<?php echo BASE_URL; ?>/vista/css/estilos.css">
+    
     <style>
-        :root {
-            --primary-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            --secondary-gradient: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
-        }
-        
         body {
-            min-height: 100vh;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 50%, #f093fb 100%);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            padding: 20px;
+            /* Global CSS handles background */
         }
         
-        .login-container {
-            background: rgba(255, 255, 255, 0.95);
-            backdrop-filter: blur(10px);
-            border-radius: 20px;
-            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
-            overflow: hidden;
-            max-width: 450px;
-            width: 100%;
-            animation: fadeInUp 0.6s ease-out;
-        }
+        /* Handled by global .glass-card class */
         
         @keyframes fadeInUp {
             from {
@@ -47,11 +29,13 @@
             }
         }
         
+        
         .login-header {
-            background: var(--primary-gradient);
+            background: rgba(0, 27, 103, 0.5);
             color: white;
             padding: 40px 30px;
             text-align: center;
+            border-bottom: 1px solid var(--glass-border);
         }
         
         .login-header h1 {
@@ -87,8 +71,8 @@
         }
         
         .btn-login {
-            background: var(--primary-gradient);
-            border: none;
+            background: var(--brand-gradient);
+            border: 1px solid var(--secondary-color);
             color: white;
             padding: 15px;
             border-radius: 10px;
@@ -102,7 +86,10 @@
         
         .btn-login:hover {
             transform: translateY(-2px);
-            box-shadow: 0 10px 25px rgba(102, 126, 234, 0.4);
+            box-shadow: 0 10px 25px rgba(0, 27, 103, 0.4);
+            color: var(--accent-color);
+            border-color: var(--accent-color);
+            background: var(--primary-color);
         }
         
         .alert {
@@ -130,13 +117,14 @@
     </style>
 </head>
 <body>
-    <div class="login-container">
+    <div class="bg-animation"></div>
+    <div class="login-container card fade-in" style="max-width: 450px; margin: 0 auto;">
         <div class="login-header">
-            <div class="logo-icon">
+            <div class="logo-icon text-accent">
                 <i class="bi bi-robot"></i>
             </div>
             <h1>FutureLab AI</h1>
-            <p>Sistema de Eventos Interactivos</p>
+            <p class="text-secondary">Sistema de Eventos Interactivos</p>
         </div>
         
         <div class="login-body">
@@ -180,7 +168,7 @@
             </form>
             
             <div class="text-center mt-4">
-                <small class="text-muted">
+                <small class="text-white-50">
                     <i class="bi bi-info-circle me-1"></i>
                     Usuarios de prueba: admin, operador, viewer
                 </small>
@@ -188,6 +176,10 @@
         </div>
     </div>
     
+    <footer class="fixed-bottom text-center py-3 text-white-50">
+        <p class="mb-0">Desarrollado por Alberto Calero</p>
+    </footer>
+
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>
