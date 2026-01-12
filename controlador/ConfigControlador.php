@@ -51,6 +51,15 @@ class ConfigControlador {
                 // Fallback mode (checkbox en el mismo form)
                 $fallback = isset($_POST['ai_fallback_mode']) ? '1' : '0';
                 $this->configModel->set('ai_fallback_mode', $fallback, $userId);
+                
+                // === SYNC FILE LOCK (More reliable for worker) ===
+                $lockFile = __DIR__ . '/../config/fallback.lock';
+                if ($fallback === '1') {
+                    touch($lockFile);
+                } else {
+                    if (file_exists($lockFile)) unlink($lockFile);
+                }
+                
                 $updated++;
             }
             

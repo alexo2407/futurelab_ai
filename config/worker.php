@@ -265,13 +265,15 @@ while ($continuar) {
             }
             
             // === MODO CONTINGENCIA (SIN IA) ===
-            // Verificar configuración en tiempo real
-            $valFallback = $configModel->get('ai_fallback_mode');
+            // Verificar archivo físico de bloqueo (Más rápido y seguro que DB)
+            $lockFile = CONFIG_PATH . '/fallback.lock';
             
-            // Debug menos intrusivo (solo si cambia)
-            // echo "[$id] DEBUG: ai_fallback_mode = " . var_export($valFallback, true) . "\n";
+            // Prioridad: Archivo > DB
+            // (Si existe el archivo, es contingencia SÍ o SÍ)
+            $fallbackMode = file_exists($lockFile);
             
-            $fallbackMode = ($valFallback == '1');
+            // Debug (opcional)
+            // if ($fallbackMode) echo "[$id] DEBUG: Fallback Lock File detectado!\n";
             
             if ($fallbackMode) {
                 echo "[$id] ⚠ MODO CONTINGENCIA: Generando imagen 'Story Format' sin IA...\n";
@@ -402,10 +404,11 @@ while ($continuar) {
             );
             
             if ($resultado['success']) {
-                echo "[$id] ✓ Imagen generada por GPT-Image-1!\n";
+                $providerName = ($aiProvider === 'falai') ? 'FalAI' : 'OpenAI';
+                echo "[$id] ✓ Imagen generada por $providerName!\n";
                 
                 // Guardar imagen generada
-                $extension = 'png'; // GPT-Image-1 devuelve PNG
+                $extension = 'png'; 
                 $filename = 'result_' . $id . '_' . time() . '.' . $extension;
                 $resultPath = RESULTS_PATH . '/' . $filename;
                 
