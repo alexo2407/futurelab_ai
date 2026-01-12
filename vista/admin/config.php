@@ -109,6 +109,30 @@ foreach ($configs as $config) {
                         Cambia entre proveedores según tus necesidades. Asegúrate de configurar el API Key correspondiente.
                     </div>
                 </div>
+
+                <!-- UNIFIED FALLBACK MODE TOGGLE (Global) -->
+                <div class="mb-3 form-check form-switch bg-light p-3 rounded border">
+                    <input 
+                        type="checkbox" 
+                        class="form-check-input" 
+                        id="ai_fallback_mode" 
+                        name="ai_fallback_mode"
+                        style="cursor: pointer;"
+                        <?php
+                        foreach ($configs as $c) {
+                            if ($c['config_key'] === 'ai_fallback_mode' && $c['config_value'] === '1') {
+                                echo 'checked';
+                            }
+                        }
+                        ?>>
+                    <label class="form-check-label fw-bold unselectable" for="ai_fallback_mode" style="cursor: pointer;">
+                        <i class="bi bi-shield-exclamation text-warning me-1"></i> Modo Contingencia (Sin IA)
+                    </label>
+                    <div class="form-text mt-1">
+                        <strong>Actívalo si no hay internet o se acabaron los créditos.</strong><br>
+                        Genera un "Cover" limpio instantáneo usando la foto original (sin API).
+                    </div>
+                </div>
                 
                 <button type="submit" class="btn btn-primary">
                     <i class="bi bi-save"></i> Guardar Proveedor
@@ -300,29 +324,6 @@ foreach ($configs as $config) {
                     </div>
                 </div>
                 
-                <!-- UNIFIED FALLBACK MODE TOGGLE -->
-                <div class="mb-3 form-check form-switch bg-light p-3 rounded border">
-                    <input 
-                        type="checkbox" 
-                        class="form-check-input" 
-                        id="ai_fallback_mode" 
-                        name="ai_fallback_mode"
-                        style="cursor: pointer;"
-                        <?php
-                        foreach ($configs as $c) {
-                            if ($c['config_key'] === 'ai_fallback_mode' && $c['config_value'] === '1') {
-                                echo 'checked';
-                            }
-                        }
-                        ?>>
-                    <label class="form-check-label fw-bold unselectable" for="ai_fallback_mode" style="cursor: pointer;">
-                        <i class="bi bi-shield-exclamation text-warning me-1"></i> Modo Contingencia (Sin IA)
-                    </label>
-                    <div class="form-text mt-1">
-                        <strong>Actívalo si no hay internet o se acabaron los créditos.</strong><br>
-                        Genera un "Cover" limpio instantáneo usando la foto original (sin API).
-                    </div>
-                </div>
                 
                 <div class="mb-3 form-check">
                     <input 
