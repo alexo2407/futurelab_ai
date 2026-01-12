@@ -266,7 +266,7 @@ while ($continuar) {
             
             // === MODO CONTINGENCIA (SIN IA) ===
             // Verificar archivo físico de bloqueo (Más rápido y seguro que DB)
-            $lockFile = CONFIG_PATH . '/fallback.lock';
+            $lockFile = __DIR__ . '/fallback.lock';
             
             // Prioridad: Archivo > DB
             // (Si existe el archivo, es contingencia SÍ o SÍ)
