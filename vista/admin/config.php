@@ -300,6 +300,30 @@ foreach ($configs as $config) {
                     </div>
                 </div>
                 
+                <!-- UNIFIED FALLBACK MODE TOGGLE -->
+                <div class="mb-3 form-check form-switch bg-light p-3 rounded border">
+                    <input 
+                        type="checkbox" 
+                        class="form-check-input" 
+                        id="ai_fallback_mode" 
+                        name="ai_fallback_mode"
+                        style="cursor: pointer;"
+                        <?php
+                        foreach ($configs as $c) {
+                            if ($c['config_key'] === 'ai_fallback_mode' && $c['config_value'] === '1') {
+                                echo 'checked';
+                            }
+                        }
+                        ?>>
+                    <label class="form-check-label fw-bold unselectable" for="ai_fallback_mode" style="cursor: pointer;">
+                        <i class="bi bi-shield-exclamation text-warning me-1"></i> Modo Contingencia (Sin IA)
+                    </label>
+                    <div class="form-text mt-1">
+                        <strong>Actívalo si no hay internet o se acabaron los créditos.</strong><br>
+                        Genera un "Cover" limpio instantáneo usando la foto original (sin API).
+                    </div>
+                </div>
+                
                 <div class="mb-3 form-check">
                     <input 
                         type="checkbox" 
@@ -799,6 +823,29 @@ foreach ($configs as $config) {
             }
         });
         
+        
+        // Auto-guardar modo contingencia
+        document.getElementById('ai_fallback_mode').addEventListener('change', function() {
+            const isChecked = this.checked;
+            const modeName = isChecked ? 'ACTIVADO' : 'DESACTIVADO';
+            
+            // Simular submit del formulario
+            document.getElementById('form-ai-provider').dispatchEvent(new Event('submit'));
+            
+            // Notificación visual rápida
+            const Toast = Swal.mixin({
+                toast: true,
+                position: 'top-end',
+                showConfirmButton: false,
+                timer: 3000,
+                timerProgressBar: true
+            });
+            
+            Toast.fire({
+                icon: isChecked ? 'warning' : 'info',
+                title: `Modo Contingencia ${modeName}`
+            });
+        });
         
         // Guardar configuración de fal.ai
         document.getElementById('form-falai-config').addEventListener('submit', async function(e) {
