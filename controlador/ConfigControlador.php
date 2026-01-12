@@ -219,12 +219,13 @@ class ConfigControlador {
                 throw new Exception('API Key es requerida');
             }
             
-            // Probar conexión con fal.ai
-            // Endpoint para listar modelos o hacer un ping
-            $ch = curl_init('https://queue.fal.run/');
+            // Probar conexión con fal.ai (Verificando historial de uso)
+            // Este endpoint requiere autenticación válida
+            $ch = curl_init('https://api.fal.ai/v1/usage');
             curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
             curl_setopt($ch, CURLOPT_HTTPHEADER, [
-                'Authorization: Key ' . $apiKey
+                'Authorization: Key ' . $apiKey,
+                'Content-Type: application/json'
             ]);
             curl_setopt($ch, CURLOPT_TIMEOUT, 10);
             
@@ -237,17 +238,16 @@ class ConfigControlador {
                 throw new Exception('Error de conexión: ' . $curlError);
             }
             
-            // fal.ai retorna 200 o 401 si key es inválida
-            if ($httpCode === 200 || $httpCode === 404) {
-                // 404 es OK (endpoint raíz no existe, pero key es válida)
+            // 200 OK significa que la Key es válida y se pudo leer el uso
+            if ($httpCode === 200) {
                 echo json_encode([
                     'ok' => true,
-                    'message' => 'Conexión exitosa! API Key válida de fal.ai.'
+                    'message' => '¡Conexión verificada! API Key válida.'
                 ]);
             } else if ($httpCode === 401 || $httpCode === 403) {
                 throw new Exception('API Key inválida o sin permisos');
             } else {
-                throw new Exception("Error HTTP: $httpCode");
+                throw new Exception("Error al verificar (HTTP $httpCode): " . $response);
             }
             
         } catch (Exception $e) {
