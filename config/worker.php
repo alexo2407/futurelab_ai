@@ -267,29 +267,127 @@ while ($continuar) {
             // === MODO CONTINGENCIA (SIN IA) ===
             // Verificar configuración en tiempo real
             $valFallback = $configModel->get('ai_fallback_mode');
-            echo "[$id] DEBUG: ai_fallback_mode = " . var_export($valFallback, true) . "\n";
+            
+            // Debug menos intrusivo (solo si cambia)
+            // echo "[$id] DEBUG: ai_fallback_mode = " . var_export($valFallback, true) . "\n";
             
             $fallbackMode = ($valFallback == '1');
             
             if ($fallbackMode) {
-                echo "[$id] ⚠ MODO CONTINGENCIA ACTIVO: Omitiendo IA y usando foto original.\n";
+                echo "[$id] ⚠ MODO CONTINGENCIA: Generando imagen 'Story Format' sin IA...\n";
                 
-                // Copiar original a resultados para mantener consistencia
-                $ext = pathinfo($participante['photo_original_path'], PATHINFO_EXTENSION);
-                if (empty($ext)) $ext = 'jpg'; // Fallback ext
+                // Determinar formato objetivo (Default: Story 9:16)
+                $targetW = 1080;
+                $targetH = 1920;
                 
-                $filename = 'fallback_' . $id . '_' . time() . '.' . $ext;
+                // Intentar respetar la configuración activa si es posible
+                if ($aiProvider === 'falai') {
+                    // FalAI format parsing (e.g., "9:16", "1:1")
+                    if ($falaiImageSize === '16:9') { $targetW = 1920; $targetH = 1080; }
+                    elseif ($falaiImageSize === '1:1') { $targetW = 1080; $targetH = 1080; }
+                    // Default to 9:16 for '9:16' or others
+                } else {
+                    // OpenAI format parsing (e.g., "1024x1792")
+                    if (strpos($openaiImageSize, 'x') !== false) {
+                        list($w, $h) = explode('x', $openaiImageSize);
+                        $targetW = (int)$w;
+                        $targetH = (int)$h;
+                    }
+                }
+
+                $filename = 'fallback_' . $id . '_' . time() . '.jpg';
                 $resultPath = RESULTS_PATH . '/' . $filename;
                 
-                if (copy($photoPath, $resultPath)) {
-                    $resultadoPath = '/storage/results/' . $filename;
-                    echo "[$id] ✓ Imagen original copiada a: $resultadoPath\n";
+                // === PROCESAMIENTO DE IMAGEN CON GD ===
+                try {
+                    // 1. Cargar original
+                    $srcImg = @imagecreatefromstring(file_get_contents($photoPath));
+                    if (!$srcImg) throw new Exception("No se pudo cargar la imagen original");
                     
-                    // Marcar como completado
+                    $origW = imagesx($srcImg);
+                    $origH = imagesy($srcImg);
+                    
+                    // 2. Crear canvas destino negro
+                    $destImg = imagecreatetruecolor($targetW, $targetH);
+                    $black = imagecolorallocate($destImg, 10, 14, 31); // Dark Navy Background
+                    imagefill($destImg, 0, 0, $black);
+                    
+                    // 3. Crear fondo borroso (Efecto Instagram)
+                    // Escalar original para llenar el fondo (cover)
+                    $ratioDest = $targetW / $targetH;
+                    $ratioOrig = $origW / $origH;
+                    
+                    $bgW = $targetW;
+                    $bgH = $targetH;
+                    $bgX = 0;
+                    $bgY = 0;
+                    
+                    if ($ratioOrig > $ratioDest) {
+                        // Original mas ancho, ajustar a altura
+                        $bgH = $targetH;
+                        $bgW = $targetH * $ratioOrig;
+                        $bgX = ($targetW - $bgW) / 2;
+                    } else {
+                        // Original mas alto, ajustar a ancho
+                        $bgW = $targetW;
+                        $bgH = $targetW / $ratioOrig;
+                        $bgY = ($targetH - $bgH) / 2;
+                    }
+                    
+                    // Copiar y redimensionar fondo
+                    imagecopyresampled($destImg, $srcImg, (int)$bgX, (int)$bgY, 0, 0, (int)$bgW, (int)$bgH, $origW, $origH);
+                    
+                    // Aplicar blur fuerte al fondo
+                    for ($i = 0; $i < 30; $i++) {
+                        imagefilter($destImg, IMG_FILTER_GAUSSIAN_BLUR);
+                    }
+                    // Oscurecer fondo
+                    imagefilter($destImg, IMG_FILTER_BRIGHTNESS, -40);
+
+                    // 4. Colocar imagen principal centrada (Contain)
+                    // Calcular dimensiones para "fit" dentro del canvas con margenes
+                    $margin = 80; // Margen en pixeles
+                    $availW = $targetW - ($margin * 2);
+                    $availH = $targetH - ($margin * 2);
+                    
+                    $fgW = $availW;
+                    $fgH = $availW / $ratioOrig;
+                    
+                    if ($fgH > $availH) {
+                        $fgH = $availH;
+                        $fgW = $availH * $ratioOrig;
+                    }
+                    
+                    $fgX = ($targetW - $fgW) / 2;
+                    $fgY = ($targetH - $fgH) / 2;
+                    
+                    // Sombra para la imagen principal (simulada con rectangulo negro semi-transparente atras)
+                    $shadowColor = imagecolorallocatealpha($destImg, 0, 0, 0, 60);
+                    imagefilledrectangle($destImg, $fgX + 10, $fgY + 10, $fgX + $fgW + 10, $fgY + $fgH + 10, $shadowColor);
+                    
+                    // Copiar imagen principal
+                    imagecopyresampled($destImg, $srcImg, (int)$fgX, (int)$fgY, 0, 0, (int)$fgW, (int)$fgH, $origW, $origH);
+                    
+                    // 5. Guardar resultado
+                    imagejpeg($destImg, $resultPath, 90);
+                    
+                    // Liberar memoria
+                    imagedestroy($srcImg);
+                    imagedestroy($destImg);
+                    
+                    $resultadoPath = '/storage/results/' . $filename;
+                    echo "[$id] ✓ Imagen Fallback creada ($targetW x $targetH): $resultadoPath\n";
+                    
                     $participanteModel->marcarComoCompletado($id, $resultadoPath);
                     echo "[$id] ✓ Participante completado (Modo Contingencia)\n";
-                } else {
-                    throw new Exception("Error al copiar imagen en Modo Contingencia");
+                    
+                } catch (Exception $gdError) {
+                    echo "[$id] ⚠ Error generando fallback GD: " . $gdError->getMessage() . ". Usando copia simple.\n";
+                    // Fallback del fallback: copia simple
+                   if (copy($photoPath, $resultPath)) {
+                        $resultadoPath = '/storage/results/' . $filename;
+                        $participanteModel->marcarComoCompletado($id, $resultadoPath);
+                    }
                 }
                 
                 // Saltar al siguiente participante
