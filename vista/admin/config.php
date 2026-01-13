@@ -406,6 +406,71 @@ foreach ($configs as $config) {
             </form>
         </div>
         
+        <!-- Widget de Estadísticas de Uso de fal.ai -->
+        <div class="card" id="falai-usage" style="display: none;">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <h5 class="mb-0">
+                    <i class="bi bi-graph-up text-primary"></i> 
+                    Estadísticas de Uso de fal.ai
+                </h5>
+                <button type="button" class="btn btn-sm btn-outline-primary" id="btn-load-usage">
+                    <i class="bi bi-arrow-clockwise"></i> Actualizar
+                </button>
+            </div>
+            
+            <!-- Loading State -->
+            <div id="usage-loading" style="display: none;" class="text-center py-3">
+                <div class="spinner-border spinner-border-sm text-primary" role="status">
+                    <span class="visually-hidden">Cargando...</span>
+                </div>
+                <p class="small text-muted mt-2 mb-0">Consultando fa l.ai...</p>
+            </div>
+            
+            <!-- Empty State -->
+            <div id="usage-empty" class="text-center py-3 text-muted">
+                <i class="bi bi-info-circle fs-4"></i>
+                <p class="small mb-0 mt-2">Haz clic en "Actualizar" para ver tus estadísticas de uso</p>
+            </div>
+            
+            <!-- Results State -->
+            <div id="usage-results" style="display: none;">
+                <div class="row g-2 mb-3">
+                    <div class="col-md-6">
+                        <div class="card border-0 shadow-sm" style="background: linear-gradient(135deg, #667eea, #764ba2); color: white;">
+                            <div class="card-body py-2">
+                                <small class="opacity-75">Total Requests (24h)</small>
+                                <h4 class="mb-0 fw-bold" id="usage-total-requests">-</h4>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="card border-0 shadow-sm" style="background: linear-gradient(135deg, #22c55e, #16a34a); color: white;">
+                            <div class="card-body py-2">
+                                <small class="opacity-75">Total Gastado (24h)</small>
+                                <h4 class="mb-0 fw-bold" id="usage-total-cost">$-</h4>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Desglose por Modelo -->
+                <div id="usage-endpoints"></div>
+                
+                <div class="mt-2">
+                    <small class="text-muted">
+                        <i class="bi bi-clock-history"></i> 
+                        Última actualización: <span id="usage-last-update">-</span>
+                    </small>
+                </div>
+            </div>
+            
+            <!-- Error State -->
+            <div id="usage-error" class="alert alert-danger mb-0" style="display: none;">
+                <i class="bi bi-exclamation-triangle"></i> 
+                <span id="usage-error-message"></span>
+            </div>
+        </div>
+        
         <!-- API de OpenAI -->
         <div class="card" id="openai-config">
             <h3><i class="bi bi-image text-success me-2"></i>Configuración de OpenAI GPT-Image-1</h3>
@@ -951,6 +1016,129 @@ foreach ($configs as $config) {
                 btn.innerHTML = originalText;
             }
         });
+        
+        // ======================
+        // ESTADÍSTICAS DE USO FAL.AI
+        // ======================
+        
+        // Mostrar widget de estadísticas solo cuando fal.ai está seleccionado
+        const originalToggle = toggleProviderConfigs;
+        toggleProviderConfigs = function() {
+            originalToggle();
+            const provider = document.getElementById('ai_provider').value;
+            const usageWidget = document.getElementById('falai-usage');
+            if (usageWidget) {
+                usageWidget.style.display = (provider === 'falai') ? 'block' : 'none';
+            }
+        };
+        
+        // Cargar estadísticas de uso
+        async function loadFalAIUsage() {
+            const apiKey = document.getElementById('falai_api_key').value;
+            
+            if (!apiKey) {
+                Swal.fire({
+                    icon: 'warning',
+                    title: 'API Key Requerida',
+                    text: 'Por favor ingresa tu API Key de fal.ai primero',
+                    confirmButtonColor: '#28a745'
+                });
+                return;
+            }
+            
+            // Show loading
+            document.getElementById('usage-empty').style.display = 'none';
+            document.getElementById('usage-results').style.display = 'none';
+            document.getElementById('usage-error').style.display = 'none';
+            document.getElementById('usage-loading').style.display = 'block';
+            
+            try {
+                const formData = new FormData();
+                formData.append('api_key', apiKey);
+                
+                const response = await fetch('<?php echo BASE_URL; ?>/api/config/falai-usage', {
+                    method: 'POST',
+                    body: formData
+                });
+                
+                const data = await response.json();
+                
+                document.getElementById('usage-loading').style.display = 'none';
+                
+                if (data.ok) {
+                    // Check if it's an info message (no real data available)
+                    if (data.info) {
+                        // Show informative message with link to dashboard
+                        document.getElementById('usage-results').style.display = 'block';
+                        document.getElementById('usage-total-requests').textContent = 'N/A';
+                        document.getElementById('usage-total-cost').textContent = 'N/A';
+                        document.getElementById('usage-last-update').textContent = new Date().toLocaleTimeString('es-GT');
+                        
+                        const endpointsDiv = document.getElementById('usage-endpoints');
+                        endpointsDiv.innerHTML = `
+                            <div class="alert alert-info border-info">
+                                <div class="d-flex align-items-start">
+                                    <i class="bi bi-info-circle-fill fs-4 me-3 flex-shrink-0"></i>
+                                    <div>
+                                        <h6 class="alert-heading mb-2">📊 Balance no disponible vía API</h6>
+                                        <p class="mb-2 small">${data.usage.message}</p>
+                                        <p class="mb-3 small text-muted">${data.usage.note}</p>
+                                        <a href="${data.usage.dashboard_url}" target="_blank" class="btn btn-sm btn-info">
+                                            <i class="bi bi-box-arrow-up-right"></i> Abrir Dashboard de fal.ai
+                                        </a>
+                                    </div>
+                                </div>
+                            </div>
+                        `;
+                    } else {
+                        // Show real statistics (if endpoint exists in the future)
+                        document.getElementById('usage-results').style.display = 'block';
+                        document.getElementById('usage-total-requests').textContent = data.usage.total_requests;
+                        document.getElementById('usage-total-cost').textContent = '$' + data.usage.total_cost.toFixed(4);
+                        document.getElementById('usage-last-update').textContent = new Date().toLocaleTimeString('es-GT');
+                        
+                        // Desglose por modelo
+                        const endpointsDiv = document.getElementById('usage-endpoints');
+                        endpointsDiv.innerHTML = '';
+                        
+                        if (Object.keys(data.usage.endpoints).length === 0) {
+                            endpointsDiv.innerHTML = '<p class="text-muted small mb-0"><i class="bi bi-info-circle"></i> No hay registros de uso en las últimas 24 horas</p>';
+                        } else {
+                            endpointsDiv.innerHTML = '<div class="mb-2"><strong class="small">Desglose por Modelo:</strong></div>';
+                            for (const [endpoint, stats] of Object.entries(data.usage.endpoints)) {
+                                const shortName = endpoint.split('/').pop();
+                                endpointsDiv.innerHTML += `
+                                    <div class="d-flex justify-content-between align-items-center p-2 mb-1" style="background: #f8f9fa; border-radius: 6px; border-left: 3px solid #667eea;">
+                                        <div>
+                                            <small class="fw-bold">${shortName}</small><br>
+                                            <small class="text-muted">${endpoint}</small>
+                                        </div>
+                                        <div class="text-end">
+                                            <span class="badge bg-primary me-1">${stats.count} req</span>
+                                            <span class="badge bg-success">$${stats.cost.toFixed(4)}</span>
+                                        </div>
+                                    </div>
+                                `;
+                            }
+                        }
+                    }
+                    
+                } else {
+                    throw new Error(data.error || 'Error al obtener estadísticas');
+                }
+                
+            } catch (error) {
+                document.getElementById('usage-loading').style.display = 'none';
+                document.getElementById('usage-error').style.display = 'block';
+                document.getElementById('usage-error-message').textContent = error.message;
+            }
+        }
+        
+        // Event listener para botón de actualizar
+        const btnLoadUsage = document.getElementById('btn-load-usage');
+        if (btnLoadUsage) {
+            btnLoadUsage.addEventListener('click', loadFalAIUsage);
+        }
     </script>
 </body>
 </html>

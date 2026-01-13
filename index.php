@@ -165,6 +165,12 @@ try {
         exit;
     }
     
+    if ($requestUri === '/api/config/falai-usage' && $requestMethod === 'POST') {
+        $controller = new ConfigControlador();
+        $controller->getFalAIUsage();
+        exit;
+    }
+    
     // ===== GESTIÓN DE CARRERAS (ADMIN) =====
     
     if ($requestUri === '/admin/careers') {

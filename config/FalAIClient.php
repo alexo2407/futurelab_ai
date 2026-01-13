@@ -372,13 +372,37 @@ class FalAIClient {
     
     /**
      * Verificar que la API key es válida
+     * Hace un test ligero sin generar imagen completa
      */
     public function testConnection() {
         try {
-            // Test con imagen pequeña dummy
-            $dummyImage = base64_encode(file_get_contents('data://text/plain;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg=='));
-            $result = $this->generateImage('test', $dummyImage, 'image/png');
-            return $result['success'];
+            // Test ligero enviando una petición mínima a la Queue API
+            $testPayload = json_encode([
+                'prompt' => 'test',
+                'image_urls' => ['data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg=='],
+                'num_images' => 1,
+                'aspect_ratio' => '1:1'
+            ]);
+            
+            $endpoint = $this->queueUrl . $this->model;
+            
+            $ch = curl_init($endpoint);
+            curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+            curl_setopt($ch, CURLOPT_POST, true);
+            curl_setopt($ch, CURLOPT_POSTFIELDS, $testPayload);
+            curl_setopt($ch, CURLOPT_HTTPHEADER, [
+                'Content-Type: application/json',
+                'Authorization: Key ' . $this->apiKey
+            ]);
+            curl_setopt($ch, CURLOPT_TIMEOUT, 10);
+            
+            $response = curl_exec($ch);
+            $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+            curl_close($ch);
+            
+            // 200-202 = autenticación válida, 401/403 = API key inválida
+            return ($httpCode >= 200 && $httpCode < 300);
+            
         } catch (Exception $e) {
             return false;
         }

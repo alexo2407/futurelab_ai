@@ -219,10 +219,18 @@ class ConfigControlador {
                 throw new Exception('API Key es requerida');
             }
             
-            // Probar conexión con fal.ai (Verificando historial de uso)
-            // Este endpoint requiere autenticación válida
-            $ch = curl_init('https://api.fal.ai/v1/usage');
+            // Probar conexión con fal.ai usando Queue API
+            // Hacemos una petición mínima a un modelo para validar la autenticación
+            $testPayload = json_encode([
+                'prompt' => 'test',
+                'image_size' => 'square_hd',
+                'num_images' => 1
+            ]);
+            
+            $ch = curl_init('https://queue.fal.run/fal-ai/fast-sdxl');
             curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+            curl_setopt($ch, CURLOPT_POST, true);
+            curl_setopt($ch, CURLOPT_POSTFIELDS, $testPayload);
             curl_setopt($ch, CURLOPT_HTTPHEADER, [
                 'Authorization: Key ' . $apiKey,
                 'Content-Type: application/json'
@@ -238,17 +246,77 @@ class ConfigControlador {
                 throw new Exception('Error de conexión: ' . $curlError);
             }
             
-            // 200 OK significa que la Key es válida y se pudo leer el uso
-            if ($httpCode === 200) {
+            // 200-202 significa autenticación válida (request aceptado en cola)
+            if ($httpCode >= 200 && $httpCode < 300) {
                 echo json_encode([
                     'ok' => true,
-                    'message' => '¡Conexión verificada! API Key válida.'
+                    'message' => '✓ Conexión verificada! API Key válida de fal.ai.'
                 ]);
             } else if ($httpCode === 401 || $httpCode === 403) {
                 throw new Exception('API Key inválida o sin permisos');
+            } else if ($httpCode === 429) {
+                // Rate limit alcanzado pero la key es válida
+                echo json_encode([
+                    'ok' => true,
+                    'message' => '✓ API Key válida (alcanzaste el límite de requests, pero la key funciona)'
+                ]);
             } else {
-                throw new Exception("Error al verificar (HTTP $httpCode): " . $response);
+                $errorData = json_decode($response, true);
+                $errorMsg = $errorData['error']['message'] ?? $response;
+                throw new Exception("Error de fal.ai (HTTP $httpCode): " . $errorMsg);
             }
+            
+        } catch (Exception $e) {
+            http_response_code(400);
+            echo json_encode([
+                'ok' => false,
+                'error' => $e->getMessage()
+            ]);
+        }
+    }
+    
+    /**
+     * API: Obtiene estadísticas de uso de fal.ai
+     */
+    public function getFalAIUsage() {
+        header('Content-Type: application/json');
+        
+        requireRole('admin');
+        
+        try {
+            if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+                throw new Exception('Método no permitido');
+            }
+
+            $apiKey = $_POST['api_key'] ?? '';
+            
+            if (empty($apiKey)) {
+                // Intentar obtener de BD si no se envía
+                $apiKey = $this->configModel->get('falai_api_key');
+            }
+            
+            if (empty($apiKey)) {
+                throw new Exception('API Key es requerida');
+            }
+            
+            // NOTA: fal.ai NO tiene un endpoint público para consultar balance/uso
+            // La única manera es a través del dashboard web: https://fal.ai/dashboard/billing
+            
+            // Devolver mensaje informativo
+            echo json_encode([
+                'ok' => true,
+                'info' => true,
+                'usage' => [
+                    'total_requests' => 0,
+                    'total_cost' => 0,
+                    'period' => '24 horas',
+                    'endpoints' => [],
+                    'message' => 'fal.ai no proporciona un endpoint público para consultar balance o estadísticas de uso vía API.',
+                    'dashboard_url' => 'https://fal.ai/dashboard/billing',
+                    'note' => 'Para ver tu balance exacto y estadísticas de uso, visita el Dashboard de fal.ai'
+                ],
+                'message' => 'Consulta tu balance en el Dashboard de fal.ai'
+            ]);
             
         } catch (Exception $e) {
             http_response_code(400);
