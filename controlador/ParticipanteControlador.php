@@ -37,13 +37,31 @@ class ParticipanteControlador {
         // Prevenir que warnings/notices rompan el JSON
         error_reporting(0);
         ini_set('display_errors', 0);
+        
+        // Log inicial para debugging
+        $logFile = __DIR__ . '/../storage/api_debug.log';
+        file_put_contents($logFile, "[" . date('Y-m-d H:i:s') . "] === INICIO CREAR PARTICIPANTE ===\n", FILE_APPEND);
+        
+        // Registrar shutdown para capturar errores fatales
+        register_shutdown_function(function() use ($logFile) {
+            $error = error_get_last();
+            if ($error && in_array($error['type'], [E_ERROR, E_PARSE, E_CORE_ERROR, E_COMPILE_ERROR])) {
+                file_put_contents($logFile, "[FATAL] " . json_encode($error) . "\n", FILE_APPEND);
+                header('Content-Type: application/json');
+                echo json_encode(['ok' => false, 'error' => 'Error fatal del servidor', 'debug' => $error['message']]);
+            }
+        });
+        
         header('Content-Type: application/json');
         
         try {
+            file_put_contents($logFile, "Verificando autenticación...\n", FILE_APPEND);
             // Verificar autenticación primero
             requireRole(['admin', 'operator']);
         } catch (Exception $e) {
             // Error de autenticación/autorización
+            $logFile = __DIR__ . '/../storage/api_debug.log';
+            file_put_contents($logFile, "[AUTH ERROR] " . $e->getMessage() . "\n", FILE_APPEND);
             http_response_code(403);
             echo json_encode([
                 'ok' => false,
@@ -54,11 +72,16 @@ class ParticipanteControlador {
             return;
         }
         
+        $logFile = __DIR__ . '/../storage/api_debug.log';
+        
         try {
+            file_put_contents($logFile, "Validando método HTTP...\n", FILE_APPEND);
             // Validar método
             if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
                 throw new Exception('Método no permitido');
             }
+            
+            file_put_contents($logFile, "Método OK. Validando campos...\n", FILE_APPEND);
             
             // Log para debugging
             error_log('=== CREAR PARTICIPANTE ===');
