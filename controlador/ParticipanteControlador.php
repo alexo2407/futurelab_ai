@@ -34,6 +34,9 @@ class ParticipanteControlador {
      * API: Crea un nuevo participante
      */
     public function crear() {
+        // Prevenir que warnings/notices rompan el JSON
+        error_reporting(0);
+        ini_set('display_errors', 0);
         header('Content-Type: application/json');
         
         try {
@@ -213,6 +216,8 @@ class ParticipanteControlador {
      * API: Obtiene el estado de un participante
      */
     public function obtenerStatus() {
+        error_reporting(0);
+        ini_set('display_errors', 0);
         header('Content-Type: application/json');
         
         try {
@@ -253,6 +258,8 @@ class ParticipanteControlador {
      * API: Reintentar procesamiento de un participante
      */
     public function reintentarProcesamiento() {
+        error_reporting(0);
+        ini_set('display_errors', 0);
         header('Content-Type: application/json');
         
         requireRole(['admin', 'operator']);
