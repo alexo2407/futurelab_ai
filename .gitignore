@@ -10,3 +10,5 @@
 Thumbs.db
 *.log
 config/fallback.lock
+*.sql
+*.md

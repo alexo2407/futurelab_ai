@@ -1,28 +1,38 @@
 # Habilitar rewrite engine
 <IfModule mod_rewrite.c>
     RewriteEngine On
+    
+    # Forzar HTTPS de forma segura para Hostinger
+    RewriteCond %{HTTP:X-Forwarded-Proto} !https
+    RewriteCond %{HTTPS} off
+    RewriteRule ^ https://%{HTTP_HOST}%{REQUEST_URI} [L,R=301]
+
+    # Establecer la base
+    # Si estás en SUBDIRECTORIO (ej: localhost/futurelab_ai/):
     RewriteBase /futurelab_ai/
     
-    # Deshabilitar listado de directorios
-    Options -Indexes
-    
-    # Redirigir todo a index.php excepto archivos existentes (imágenes, css, js)
+    # Si estás en RAÍZ (ej: keisertech.cloud/):
+    # RewriteBase /
+
+    # Ignorar archivos y carpetas reales (CSS, JS, Imágenes)
     RewriteCond %{REQUEST_FILENAME} !-f
-    # Nota: Quitamos la condición !-d para que el acceso a carpetas también vaya al index.php (404)
+    RewriteCond %{REQUEST_FILENAME} !-d
+    
+    # Redirigir todo lo demás al index.php
     RewriteRule ^(.*)$ index.php [QSA,L]
 </IfModule>
 
-# Proteger archivos sensibles
-<FilesMatch "^(config\.php|\.env|composer\.json|composer\.lock)$">
-    Order allow,deny
-    Deny from all
+# Bloquear archivos sensibles
+<FilesMatch "\.(sql|md|env|json|sh|lock|log)$">
+    Require all denied
 </FilesMatch>
-
 # Seguridad adicional
 <IfModule mod_headers.c>
     Header set X-Content-Type-Options "nosniff"
     Header set X-Frame-Options "SAMEORIGIN"
     Header set X-XSS-Protection "1; mode=block"
+    # HSTS (Opcional: Solo si usas HTTPS, mantiene al usuario en sitio seguro por 1 año)
+    # Header always set Strict-Transport-Security "max-age=31536000; includeSubDomains"
 </IfModule>
 
 # PHP settings
@@ -31,4 +41,6 @@
     php_value post_max_size 10M
     php_value max_execution_time 300
     php_value max_input_time 300
+    # Deshabilitar mostrar errores en producción (Seguridad)
+    # php_flag display_errors Off
 </IfModule>
