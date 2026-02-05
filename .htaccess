@@ -9,10 +9,10 @@
 
     # Establecer la base
     # Si estás en SUBDIRECTORIO (ej: localhost/futurelab_ai/):
-    RewriteBase /futurelab_ai/
+    # RewriteBase /futurelab_ai/
     
     # Si estás en RAÍZ (ej: keisertech.cloud/):
-    # RewriteBase /
+    RewriteBase /
 
     # Ignorar archivos y carpetas reales (CSS, JS, Imágenes)
     RewriteCond %{REQUEST_FILENAME} !-f
