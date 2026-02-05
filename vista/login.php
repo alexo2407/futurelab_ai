@@ -171,6 +171,25 @@
                 </button>
             </form>
             
+            <!-- TEST DE CONEXIÓN BD (TEMPORAL) -->
+            <div class="text-center mt-3">
+                <?php
+                try {
+                    if (defined('DB_HOST')) {
+                        $dsn = "mysql:host=" . DB_HOST . ";dbname=" . DB_SCHEMA . ";charset=utf8mb4";
+                        $testConn = new PDO($dsn, DB_USER, DB_PASSWORD);
+                        echo '<span class="badge bg-success"><i class="bi bi-database-check"></i> BD Conectada: ' . DB_SCHEMA . '</span>';
+                    } else {
+                        echo '<span class="badge bg-warning text-dark"><i class="bi bi-exclamation-triangle"></i> Config no cargada</span>';
+                    }
+                } catch(PDOException $e) {
+                    echo '<div class="alert alert-danger mt-2" style="font-size: 0.8rem;">';
+                    echo '<strong>❌ Error BD:</strong> ' . $e->getMessage();
+                    echo '</div>';
+                }
+                ?>
+            </div>
+            
             <div class="text-center mt-4">
                 <small class="text-white-50">
                     <i class="bi bi-info-circle me-1"></i>
