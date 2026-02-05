@@ -15,7 +15,7 @@ if (php_sapi_name() !== 'cli') {
 require_once __DIR__ . '/config.php';
 require_once __DIR__ . '/OpenAIClient.php';
 require_once __DIR__ . '/FalAIClient.php';
-require_once __DIR__ . '/../modelo/conexion.php';
+require_once __DIR__ . '/../modelo/Conexion.php';
 require_once __DIR__ . '/../modelo/ParticipanteModel.php';
 require_once __DIR__ . '/../modelo/CarreraModel.php';
 require_once __DIR__ . '/../modelo/ConfigModel.php';
