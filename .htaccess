@@ -37,10 +37,12 @@
 
 # PHP settings
 <IfModule mod_php.c>
-    php_value upload_max_filesize 10M
-    php_value post_max_size 10M
-    php_value max_execution_time 300
-    php_value max_input_time 300
+    # Comentado para evitar Error 500 en servidores con PHP-FPM (Hostinger, cPanel, etc)
+    # Configure estos valores en su panel de hosting (PHP Selector) o en .user.ini
+    # php_value upload_max_filesize 10M
+    # php_value post_max_size 10M
+    # php_value max_execution_time 300
+    # php_value max_input_time 300
     # Deshabilitar mostrar errores en producción (Seguridad)
     # php_flag display_errors Off
 </IfModule>
